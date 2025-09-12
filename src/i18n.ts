@@ -1,15 +1,17 @@
-/*
- * All i18n resources specified in the plugin `include` option can be loaded
- * at once using the import syntax
- */
-import messages from '@intlify/unplugin-vue-i18n/messages'
-import style from '@proctoring/sdk/assets/scss/base.module.scss'
 import { createI18n } from 'vue-i18n'
 
-const STORAGE_KEY = 'proctoring_last_user_locale'
+import en from '@/locales/en'
+import ru from '@/locales/ru'
 
-const defaultLocale = 'ru'
-const fallbackLocale = 'ru'
+export type Locale = keyof typeof messages
+
+const messages = {
+  en,
+  ru,
+}
+
+const defaultLocale = 'en'
+const fallbackLocale = 'en'
 
 const i18n = createI18n({
   legacy: false,
@@ -36,25 +38,24 @@ const i18n = createI18n({
   },
 })
 
+const trim = (locale: string) => locale.split(/-|_/)[0]
+
 export function setLocale(
-  locale: string | null = JSON.parse(localStorage.getItem(STORAGE_KEY) || '""'),
+  locale?: Locale,
 ): void {
-  i18n.global.locale.value
+  const userLocale
     // Looking if locale available
     = i18n.global.availableLocales.find(lang => lang === locale)
-    // Checking one of the system language is available
-      || navigator.languages.find(lang => lang === defaultLocale)
-      || navigator.languages.find(lang => i18n.global.availableLocales.includes(lang))
-    // Stay with default for propper typings
+      // Checking one of the system languages available
+      || navigator.languages.find(lang => i18n.global.availableLocales.includes(trim(lang) as Locale))
+      // Stay with default for propper typings
       || defaultLocale
 
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(i18n.global.locale.value))
+  i18n.global.locale.value = userLocale as Locale
 
-  // const { direction } = availableLocales[locale]
-  const root = document.getElementById(style.app)!
-
-  // root.setAttribute('dir', direction)
-  root.setAttribute('lang', i18n.global.locale.value)
+  const root = document.documentElement!
+  root.setAttribute('lang', userLocale)
+  root.setAttribute('dir', i18n.global.t('meta.direction'))
 }
 
 export default i18n

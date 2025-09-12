@@ -11,6 +11,9 @@ const resolve = (path: string) => fileURLToPath(new URL(path, import.meta.url))
 
 // https://vite.dev/config/
 export default defineConfig({
+  server: {
+    host: true,
+  },
   plugins: [
     vue(),
     vueDevTools(),

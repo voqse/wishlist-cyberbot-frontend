@@ -1,6 +1,13 @@
 export default {
   meta: {
     name: 'Русский',
-    dir: 'ltr',
+    direction: 'ltr',
+  },
+  app: {
+    title: 'Список подарков',
+  },
+  common: {
+    add: 'Добавить',
+    cancel: 'Отменить',
   },
 }
