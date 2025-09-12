@@ -6,16 +6,17 @@ on:
 
 jobs:
   build:
-    runs-on: 'ubuntu-20.04'
+    runs-on: ubuntu-latest
     steps:
       - name: 'Checkout Repository'
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: 'Setup Node.js'
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 22.x
           registry-url: https://registry.npmjs.org/
+          cache: 'yarn'
 
       - name: 'Install Dependencies and Build'
         run: |
@@ -23,23 +24,23 @@ jobs:
           yarn build
 
       - name: 'Upload Production Artifact'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: 'production'
           path: 'dist'
 
   upload:
-    runs-on: 'ubuntu-20.04'
+    runs-on: ubuntu-latest
     needs: [build]
     steps:
       - name: 'Download Production Artifact'
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: 'production'
           path: 'dist'
 
       - name: 'Copy Production files to Remote'
-        uses: appleboy/scp-action@master
+        uses: appleboy/scp-action@v1.0.0
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USERNAME }}
