@@ -38,16 +38,17 @@ const i18n = createI18n({
   },
 })
 
-const trim = (locale: string) => locale.split(/-|_/)[0]
+const trim = (locale: string) => locale.split(/-|_/)[0] as Locale
 
 export function setLocale(
   locale?: Locale,
 ): void {
+  const appLocales = i18n.global.availableLocales
   const userLocale
     // Looking if locale available
-    = i18n.global.availableLocales.find(lang => lang === locale)
+    = appLocales.find(lang => lang === locale)
       // Checking one of the system languages available
-      || navigator.languages.find(lang => i18n.global.availableLocales.includes(trim(lang) as Locale))
+      || navigator.languages.map(trim).find(lang => appLocales.includes(lang))
       // Stay with default for propper typings
       || defaultLocale
 
