@@ -1,0 +1,31 @@
+@use "sass:meta";
+@use "sass:math";
+@use "breakpoints" as *;
+
+@function isNumber($value) {
+  @return meta.type-of($value) == "number";
+}
+
+@function isUnitRem($value) {
+  @return isNumber($value) and math.unit($value) == "rem";
+}
+
+@function stripUnit($value) {
+  @return math.div($value, $value * 0 + 1);
+}
+
+@function fluidSize($minSize, $maxSize, $minViewportWidth: breakpointMin(sm), $maxViewportWidth: breakpointMax(xxl)) {
+  @if isUnitRem($minSize) and isUnitRem($maxSize) {
+    $minViewportWidth: math.div(stripUnit($minViewportWidth), 16);
+    $maxViewportWidth: math.div(stripUnit($maxViewportWidth), 16);
+  }
+
+  $slope: math.div($maxSize - $minSize, $maxViewportWidth - $minViewportWidth);
+  $scale: $minSize - ($slope * $minViewportWidth);
+
+  @return clamp(#{$minSize}, #{stripUnit($slope) * 100}vw + #{$scale}, #{$maxSize});
+}
+
+@function relativePadding($container-width, $content-width) {
+  @return math.div(math.div($container-width - $content-width, 2) * 100%, $container-width);
+}

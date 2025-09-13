@@ -1,0 +1,61 @@
+@use "sass:math";
+@use "sass:color";
+
+@mixin aspectRatio($ratio: math.div(16, 9)) {
+  &::before {
+    float: left;
+    padding-top: math.div(100%, $ratio);
+    content: "";
+  }
+
+  &::after {
+    display: block;
+    clear: both;
+    content: "";
+  }
+}
+
+@mixin hideScrollbar() {
+  #{if(&, "&", "html, body")} {
+    scrollbar-width: none;
+  }
+
+  #{if(&, "&::-webkit-scrollbar", "html::-webkit-scrollbar, body::-webkit-scrollbar")} {
+    display: none;
+  }
+}
+
+@mixin customScrollbar($colorTrack: #ffffff, $colorHandle: #b7b7b7) {
+  $parentOrRoot: if(&, "&", "");
+
+  @if & {
+    scrollbar-gutter: stable;
+  }
+
+  #{$parentOrRoot}::-webkit-scrollbar {
+    width: 0.75rem;
+    height: 0.75rem;
+  }
+
+  #{$parentOrRoot}::-webkit-scrollbar-track {
+    background: var(--scrollbar-track-color, $colorTrack);
+  }
+
+  #{$parentOrRoot}::-webkit-scrollbar-thumb {
+    background: $colorHandle;
+    border: 0.25rem solid var(--scrollbar-track-color, $colorTrack);
+
+    &:hover { background: color.scale($colorHandle, $lightness: -5%); }
+    &:active { background: color.scale($colorHandle, $lightness: -10%); }
+  }
+
+  #{$parentOrRoot}::-webkit-scrollbar-thumb:vertical {
+    &:hover { border-inline-start-width: 0.125rem; }
+    &:active { border-inline-start-width: 0.125rem; }
+  }
+
+  #{$parentOrRoot}::-webkit-scrollbar-thumb:horizontal {
+    &:hover { border-block-start-width: 0.125rem; }
+    &:active { border-block-start-width: 0.125rem; }
+  }
+}

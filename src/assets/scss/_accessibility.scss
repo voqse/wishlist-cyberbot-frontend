@@ -1,0 +1,9 @@
+@mixin style {
+  $parentOrRoot: if(&, "&", "");
+
+  #{$parentOrRoot}[dir=rtl] {
+    svg {
+      transform: scaleX(-1);
+    }
+  }
+}
