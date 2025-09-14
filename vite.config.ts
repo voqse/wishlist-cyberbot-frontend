@@ -19,8 +19,7 @@ export default defineConfig(({ mode }) => {
     server: {
       host: true,
       proxy: {
-        '/auth': { target: 'http://localhost:3000' },
-        '/wishlist': { target: 'http://localhost:3000' },
+        '/api': { target: 'http://localhost:3000' },
       },
     },
     plugins: [
@@ -38,7 +37,8 @@ export default defineConfig(({ mode }) => {
       },
     },
     define: {
-      API_BASE: JSON.stringify(env.API_BASE),
+      __DEV__: JSON.stringify(__DEV__),
+      __TEST__: JSON.stringify(Boolean(env.TEST_ENV)),
     },
   }
 })

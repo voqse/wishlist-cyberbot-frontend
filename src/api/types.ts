@@ -14,9 +14,9 @@ export interface Item {
   text: string
   links?: string[]
   photos?: string[]
-  createdBy: User['id']
+  createdBy: User
   createdAt: string
-  reservedBy?: User['id']
+  reservedBy?: User
   reservedAt?: string
 }
 
@@ -25,6 +25,6 @@ export interface Wishlist {
   shareId: string
   title: string
   items: Item[]
-  createdBy: User['id']
+  createdBy: User
   createdAt: string
 }
