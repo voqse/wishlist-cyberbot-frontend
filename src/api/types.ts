@@ -1,6 +1,13 @@
-import type { WebAppUser } from '@twa-dev/types'
-
-export interface User extends WebAppUser {}
+export interface User {
+  id: number
+  firstName: string
+  lastName?: string
+  username?: string
+  languageCode?: string
+  isPremium?: boolean
+  photoUrl?: string
+  token: string
+}
 
 export interface Item {
   id: number
@@ -15,6 +22,7 @@ export interface Item {
 
 export interface Wishlist {
   id: number
+  shareId: string
   title: string
   items: Item[]
   createdBy: User['id']
