@@ -166,11 +166,12 @@ onMounted(async () => {
             {{ t('wishlist.newItem') }}
           </button>
         </template>
-        <template v-else>
-          <button :class="style.appListItemAction" @click="createOwnWishlist">
-            {{ t('wishlist.newList') }}
-          </button>
-        </template>
+      </div>
+
+      <div v-if="!isOwner" :class="style.appPanel">
+        <button :class="style.appListItemAction" @click="createOwnWishlist">
+          {{ t('wishlist.newList') }}
+        </button>
       </div>
     </div>
   </Transition>
