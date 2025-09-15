@@ -4,7 +4,7 @@ import style from '@/assets/scss/base.module.scss'
 
 const props = defineProps<{
   modelValue: string
-  isOwnWishlist?: boolean
+  isOwner?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -17,9 +17,19 @@ const modelValue = useVModel(props, 'modelValue', emit)
 
 <template>
   <li>
-    <input v-model="modelValue" placeholder="Item" type="text" :class="style.appListInput">
-    <button v-if="isOwnWishlist" @click="emit('delete')">
-      Delete
-    </button>
+    <template v-if="isOwner">
+      <input v-model="modelValue" placeholder="Item" type="text" :class="style.appListInput">
+      <button v-if="isOwner" @click="emit('delete')">
+        Delete
+      </button>
+    </template>
+    <template v-else>
+      <div>
+        Checkbox
+      </div>
+      <div>
+        {{ modelValue }}
+      </div>
+    </template>
   </li>
 </template>

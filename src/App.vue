@@ -14,16 +14,15 @@ const { t } = useI18n()
 
 const isReady = ref(false)
 
-const shareId = ref(WebApp.initDataUnsafe.start_param)
-const initData = ref(WebApp.initData || import.meta.env.VITE_INIT_DATA)
+const initData = ref(WebApp.initData || __DEV_INIT_DATA__)
+const shareId = ref(WebApp.initDataUnsafe.start_param || __DEV_START_PARAM__)
 
-const currentUser = ref<User>({} as User)
+const currentUser = ref<User>()
 const wishlist = ref<Wishlist>({
   items: [] as Item[],
-  createdBy: {} as User,
 } as Wishlist)
 
-const isOwnWishlist = computed(() => wishlist.value.createdBy?.id === currentUser.value?.id)
+const isOwner = computed(() => wishlist.value.createdBy?.id === currentUser.value?.id)
 
 const wishlistUserUsername = computed(() => wishlist.value
   ? wishlist.value.createdBy.firstName || wishlist.value.createdBy.username
@@ -57,7 +56,7 @@ watchEffect(() => {
 })
 
 onMounted(async () => {
-  if (typeof import.meta.env.VITE_API_BASE === 'string') {
+  if (typeof __API_BASE__ === 'string') {
     currentUser.value = await auth(initData.value)
     wishlist.value = await getWishlist(shareId.value)
   }
@@ -80,9 +79,9 @@ onMounted(async () => {
       </div>
       <div :class="style.appPanel">
         <AppWishlist v-if="wishlist.items.length">
-          <AppWishlistItem v-for="item in wishlist.items" :key="item.id" v-model="item.text" :is-own-wishlist @delete="removeItem(item.id)" />
+          <AppWishlistItem v-for="item in wishlist.items" :key="item.id" v-model="item.text" :is-owner @delete="removeItem(item.id)" />
         </AppWishlist>
-        <template v-if="isOwnWishlist">
+        <template v-if="isOwner">
           <button :class="style.appListItemAction" @click="addItem">
             Add a new wish
           </button>

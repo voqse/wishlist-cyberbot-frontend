@@ -2,10 +2,9 @@
 /// <reference types="vite-svg-loader" />
 /// <reference types="@intlify/unplugin-vue-i18n/messages" />
 
-import type { Telegram } from '@twa-dev/types'
+declare const __DEV__: boolean
+declare const __TEST__: boolean
 
-declare global {
-  interface Window {
-    Telegram: Telegram
-  }
-}
+declare const __API_BASE__: string
+declare const __DEV_INIT_DATA__: string
+declare const __DEV_START_PARAM__: string

@@ -12,12 +12,13 @@ export interface User {
 export interface Item {
   id: number
   text: string
-  links?: string[]
-  photos?: string[]
+  links: string[]
+  photos: string[]
   createdBy: User
-  createdAt: string
-  reservedBy?: User
-  reservedAt?: string
+  createdAt: number
+  updatedAt: number
+  reservedBy: User | null
+  reservedAt: number | null
 }
 
 export interface Wishlist {
@@ -26,5 +27,5 @@ export interface Wishlist {
   title: string
   items: Item[]
   createdBy: User
-  createdAt: string
+  createdAt: number
 }

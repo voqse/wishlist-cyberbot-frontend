@@ -9,7 +9,7 @@ function request<T = Record<string, unknown>>(path: string, method: string, body
   if (token) headers.Authorization = `Bearer ${token}`
   if (body) params.body = JSON.stringify(body)
 
-  return fetch(import.meta.env.VITE_API_BASE + path, params)
+  return fetch(__API_BASE__ + path, params)
     .then(res => res.json())
 }
 

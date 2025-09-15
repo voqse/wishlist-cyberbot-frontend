@@ -39,6 +39,11 @@ export default defineConfig(({ mode }) => {
     define: {
       __DEV__: JSON.stringify(__DEV__),
       __TEST__: JSON.stringify(Boolean(env.TEST_ENV)),
+
+      __API_BASE__: JSON.stringify(env.API_BASE),
+
+      __DEV_INIT_DATA__: JSON.stringify(env.DEV_INIT_DATA),
+      __DEV_START_PARAM__: JSON.stringify(env.DEV_START_PARAM),
     },
   }
 })
