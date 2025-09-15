@@ -15,6 +15,7 @@ import style from '@/assets/scss/base.module.scss'
 import AppCheckbox from '@/components/AppCheckbox.vue'
 import AppUserPhoto from '@/components/AppUserPhoto.vue'
 import { fadeVueTransitionProps } from '@/constants'
+import { setLocale } from '@/i18n.ts'
 
 const { t } = useI18n()
 
@@ -31,12 +32,15 @@ const wishlist = ref<Wishlist>({
 const isOwner = computed(() => wishlist.value.createdBy?.id === currentUser.value?.id)
 
 const wishlistUserUsername = computed(() => wishlist.value
-  ? wishlist.value.createdBy.firstName || wishlist.value.createdBy.username
+  ? formatUsername(wishlist.value.createdBy)
   : 'Unauthorised')
 
-const title = computed(() => wishlist.value
-  ? `${wishlistUserUsername.value}'s wishlist`
-  : 'New wishlist')
+function formatUsername(user: User) {
+  return [
+    user.firstName,
+    user.lastName,
+  ].filter(Boolean).join(' ') || `@${user.username}`
+}
 
 const saveItems = useDebounceFn(() => saveItemsRequest(wishlist.value.items), 1000)
 
@@ -65,6 +69,10 @@ function shareWishlist() {
   WebApp.openTelegramLink(shareUrl.toString())
 }
 
+function createOwnWishlist() {
+  WebApp.openTelegramLink(`https://t.me/GiftListRobot?startapp`)
+}
+
 watchEffect(() => {
   if (wishlist.value.items.length) return
   addItem()
@@ -74,6 +82,8 @@ onMounted(async () => {
   if (typeof __API_BASE__ === 'string') {
     currentUser.value = await auth(initData.value)
     wishlist.value = await getWishlist(shareId.value)
+
+    setLocale(currentUser.value.languageCode)
 
     if (!isOwner.value && shareId.value) {
       const { data } = useWebSocket(`${__API_WS_BASE__}/wishlist/ws/${shareId.value}`, { autoReconnect: true })
@@ -106,11 +116,11 @@ onMounted(async () => {
             :class="style.appTitlePhoto"
           />
           <div :class="style.appTitleText">
-            {{ title }}
+            {{ wishlistUserUsername }}
           </div>
           <div v-if="isOwner">
             <button :class="style.appListItemAction" @click="shareWishlist">
-              Share
+              {{ t('common.share') }}
             </button>
           </div>
         </div>
@@ -123,7 +133,7 @@ onMounted(async () => {
               <AppCheckbox disabled />
               <input v-model="item.text" placeholder="Item" type="text" :class="style.appListInput" @input="saveItems">
               <button v-if="isOwner" @click="removeItem(item.id)">
-                Delete
+                {{ t('common.remove') }}
               </button>
             </template>
 
@@ -144,7 +154,7 @@ onMounted(async () => {
                 </template>
                 <div>{{ item.text }}</div>
                 <div v-if="Boolean(item.reservedBy)" :class="style.appListItemReserverUsername">
-                  {{ `@${item.reservedBy!.username}` }}
+                  {{ formatUsername(item.reservedBy!) }}
                 </div>
               </AppCheckbox>
             </template>
@@ -153,7 +163,12 @@ onMounted(async () => {
 
         <template v-if="isOwner">
           <button :class="style.appListItemAction" @click="addItem">
-            Add a new wish
+            {{ t('wishlist.newItem') }}
+          </button>
+        </template>
+        <template v-else>
+          <button :class="style.appListItemAction" @click="createOwnWishlist">
+            {{ t('wishlist.newList') }}
           </button>
         </template>
       </div>

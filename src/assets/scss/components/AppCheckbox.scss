@@ -1,7 +1,7 @@
 @mixin style {
   .appCheckbox {
     display: grid;
-    grid-template-columns: 2rem minmax(0, 1fr);
+    grid-template-columns: 2.5rem minmax(0, 1fr);
     gap: 0 0.75rem;
     font-size: 1rem;
   }

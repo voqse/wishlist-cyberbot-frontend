@@ -9,5 +9,11 @@ export default {
   common: {
     add: 'Add',
     cancel: 'Cancel',
+    share: 'Share',
+    remove: 'Remove',
+  },
+  wishlist: {
+    newItem: 'Add a new wish',
+    newList: 'Create you own wishlist',
   },
 }

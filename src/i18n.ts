@@ -41,7 +41,7 @@ const i18n = createI18n({
 const trim = (locale: string) => locale.split(/-|_/)[0] as Locale
 
 export function setLocale(
-  locale?: Locale,
+  locale?: string,
 ): void {
   const appLocales = i18n.global.availableLocales
   const userLocale
