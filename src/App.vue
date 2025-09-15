@@ -6,9 +6,8 @@ import { computed, onMounted, ref, watchEffect } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { auth, getWishlist, saveItems } from '@/api'
 import style from '@/assets/scss/base.module.scss'
+import AppCheckbox from '@/components/AppCheckbox.vue'
 import AppUserPhoto from '@/components/AppUserPhoto.vue'
-import AppWishlist from '@/components/AppWishlist.vue'
-import AppWishlistItem from '@/components/AppWishlistItem.vue'
 import { fadeVueTransitionProps } from '@/constants'
 
 const { t } = useI18n()
@@ -89,21 +88,36 @@ onMounted(async () => {
           <div :class="style.appTitleText">
             {{ title }}
           </div>
+          <div v-if="isOwner">
+            <button :class="style.appListItemAction" @click="shareWishlist">
+              Share
+            </button>
+          </div>
         </div>
       </div>
+
       <div :class="style.appPanel">
-        <AppWishlist v-if="wishlist.items.length">
-          <AppWishlistItem v-for="item in wishlist.items" :key="item.id" v-model="item.text" :is-owner @delete="removeItem(item.id)" />
-        </AppWishlist>
+        <ul v-if="wishlist.items.length" :class="style.appList">
+          <li v-for="item in wishlist.items" :key="item.id" :class="style.appListItem">
+            <template v-if="isOwner">
+              <AppCheckbox />
+              <input v-model="item.text" placeholder="Item" type="text" :class="style.appListInput">
+              <button v-if="isOwner" @click="removeItem(item.id)">
+                Delete
+              </button>
+            </template>
+            <template v-else>
+              <AppCheckbox>{{ item.text }}</AppCheckbox>
+            </template>
+          </li>
+        </ul>
+
         <template v-if="isOwner">
           <button :class="style.appListItemAction" @click="addItem">
             Add a new wish
           </button>
           <button :class="style.appListItemAction" @click="saveItems(wishlist.items)">
             Save
-          </button>
-          <button :class="style.appListItemAction" @click="shareWishlist">
-            Share wishlist
           </button>
         </template>
       </div>

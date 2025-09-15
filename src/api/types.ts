@@ -7,6 +7,8 @@ export interface User {
   isPremium?: boolean
   photoUrl?: string
   token: string
+  // createdAt: number
+  // updatedAt: number
 }
 
 export interface Item {
@@ -16,7 +18,7 @@ export interface Item {
   photos: string[]
   createdBy: User
   createdAt: number
-  updatedAt: number
+  // updatedAt: number
   reservedBy: User | null
   reservedAt: number | null
 }
@@ -28,4 +30,5 @@ export interface Wishlist {
   items: Item[]
   createdBy: User
   createdAt: number
+  // updatedAt: number
 }

@@ -28,6 +28,10 @@ export function saveItems(items: Partial<Item>[]) {
   return request('/wishlist/items', 'POST', { items })
 }
 
-export function reserveItem(itemId: Item['id']) {
-  return request(`/wishlist/items/${itemId}/reserve`, 'POST')
+export function itemReserve(itemId: Item['id']) {
+  return request(`/wishlist/items/reserve/${itemId}`, 'POST')
+}
+
+export function itemReserveCancel(itemId: Item['id']) {
+  return request(`/wishlist/items/reserve/cancel/${itemId}`, 'POST')
 }
