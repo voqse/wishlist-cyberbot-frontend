@@ -76,7 +76,7 @@ onMounted(async () => {
     wishlist.value = await getWishlist(shareId.value)
 
     if (!isOwner.value && shareId.value) {
-      const { data } = useWebSocket(`${__API_WS_BASE__}/wishlist/ws/${shareId.value}`)
+      const { data } = useWebSocket(`${__API_WS_BASE__}/wishlist/ws/${shareId.value}`, { autoReconnect: true, heartbeat: true })
 
       whenever(data, () => {
         try {
@@ -126,6 +126,7 @@ onMounted(async () => {
               <AppCheckbox
                 :class="style.appListItemCheckboxFullWidth"
                 :model-value="Boolean(item.reservedBy)"
+                :disabled="Boolean(item.reservedBy && item.reservedBy.id !== currentUser!.id)"
                 @update:model-value="reserveItem(item.id, $event as boolean)"
               >
                 {{ item.text }}
