@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import type { Item, User, Wishlist } from '@/api/types'
 import WebApp from '@twa-dev/sdk'
-import { useWebSocket, whenever } from '@vueuse/core'
+import { useDebounceFn, useWebSocket, whenever } from '@vueuse/core'
 import { computed, onMounted, ref, watchEffect } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { auth, getWishlist, saveItems } from '@/api'
+import { auth, getWishlist, saveItems as saveItemsRequest } from '@/api'
 import style from '@/assets/scss/base.module.scss'
 import AppCheckbox from '@/components/AppCheckbox.vue'
 import AppUserPhoto from '@/components/AppUserPhoto.vue'
@@ -32,6 +32,8 @@ const title = computed(() => wishlist.value
   ? `${wishlistUserUsername.value}'s wishlist`
   : 'New wishlist')
 
+const saveItems = useDebounceFn(() => saveItemsRequest(wishlist.value.items), 1000)
+
 function addItem() {
   wishlist.value.items.push({
     text: '',
@@ -40,6 +42,7 @@ function addItem() {
 
 function removeItem(id: Item['id']) {
   wishlist.value.items = wishlist.value.items.filter(item => item.id !== id)
+  saveItems()
 }
 
 function shareWishlist() {
@@ -101,7 +104,7 @@ onMounted(async () => {
           <li v-for="item in wishlist.items" :key="item.id" :class="style.appListItem">
             <template v-if="isOwner">
               <AppCheckbox />
-              <input v-model="item.text" placeholder="Item" type="text" :class="style.appListInput">
+              <input v-model="item.text" placeholder="Item" type="text" :class="style.appListInput" @input="saveItems">
               <button v-if="isOwner" @click="removeItem(item.id)">
                 Delete
               </button>
@@ -115,9 +118,6 @@ onMounted(async () => {
         <template v-if="isOwner">
           <button :class="style.appListItemAction" @click="addItem">
             Add a new wish
-          </button>
-          <button :class="style.appListItemAction" @click="saveItems(wishlist.items)">
-            Save
           </button>
         </template>
       </div>
