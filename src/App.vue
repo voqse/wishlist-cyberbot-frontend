@@ -99,7 +99,12 @@ onMounted(async () => {
     <div v-if="isReady" :class="style.appLayout">
       <div :class="style.appPanel">
         <div :class="style.appTitle">
-          <AppUserPhoto v-if="wishlist.createdBy?.photoUrl" :src="wishlist.createdBy.photoUrl" :alt="`${wishlistUserUsername}'s photo`" />
+          <AppUserPhoto
+            v-if="wishlist.createdBy?.photoUrl"
+            :src="wishlist.createdBy.photoUrl"
+            :alt="`${wishlistUserUsername}'s photo`"
+            :class="style.appTitlePhoto"
+          />
           <div :class="style.appTitleText">
             {{ title }}
           </div>
@@ -129,7 +134,18 @@ onMounted(async () => {
                 :disabled="Boolean(item.reservedBy && item.reservedBy.id !== currentUser!.id)"
                 @update:model-value="reserveItem(item.id, $event as boolean)"
               >
-                {{ item.text }}
+                <template #photo>
+                  <AppUserPhoto
+                    v-if="Boolean(item.reservedBy) && item.reservedBy?.photoUrl"
+                    :src="item.reservedBy.photoUrl"
+                    :alt="`${item.reservedBy.username}'s photo`"
+                    :class="style.appCheckBoxPhoto"
+                  />
+                </template>
+                <div>{{ item.text }}</div>
+                <div v-if="Boolean(item.reservedBy)" :class="style.appListItemReserverUsername">
+                  {{ `@${item.reservedBy!.username}` }}
+                </div>
               </AppCheckbox>
             </template>
           </li>

@@ -35,19 +35,22 @@ watch(modelValue, onChecked, { flush: 'post', deep: true })
 
 <template>
   <label :class="style.appCheckbox">
-    <input
-      ref="inputRef"
-      v-model="modelValue"
-      v-bind="{ value, trueValue, falseValue, indeterminate, disabled }"
-      type="checkbox"
-      :class="[
-        style.appCheckboxInput,
-        hidden && style.appCheckoxHidden,
-        disabled && style.appCheckoxDisabled,
-      ]"
-    >
-    <span v-if="$slots.default" :class="style.appCheckboxText">
+    <div :class="style.appCheckBoxInputWrapper">
+      <input
+        ref="inputRef"
+        v-model="modelValue"
+        v-bind="{ value, trueValue, falseValue, indeterminate, disabled }"
+        type="checkbox"
+        :class="[
+          style.appCheckboxInput,
+          hidden && style.appCheckoxHidden,
+          disabled && style.appCheckoxDisabled,
+        ]"
+      >
+      <slot name="photo" />
+    </div>
+    <div v-if="$slots.default" :class="style.appCheckboxText">
       <slot />
-    </span>
+    </div>
   </label>
 </template>

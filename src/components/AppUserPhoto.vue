@@ -12,7 +12,7 @@ const isReady = ref(false)
 </script>
 
 <template>
-  <div :class="style.appTitlePhoto">
+  <div :class="style.appUserPhoto">
     <Transition v-bind="fadeVueTransitionProps">
       <img v-show="isReady" v-bind="props" @load="isReady = true">
     </Transition>
