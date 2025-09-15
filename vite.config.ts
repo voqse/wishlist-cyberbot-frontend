@@ -63,6 +63,7 @@ export default defineConfig(({ mode }) => {
 
       __API_BASE__: JSON.stringify(env.API_BASE),
       __API_WS_BASE__: JSON.stringify(env.API_WS_BASE),
+      __TG_BOT_NAME__: JSON.stringify(env.TG_BOT_NAME),
 
       __DEV_INIT_DATA__: JSON.stringify(env.DEV_INIT_DATA),
       __DEV_START_PARAM__: JSON.stringify(env.DEV_START_PARAM),

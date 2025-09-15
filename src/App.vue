@@ -62,7 +62,7 @@ function reserveItem(id: Item['id'], reserve: boolean) {
 }
 
 function shareWishlist() {
-  const appUrl = `https://t.me/GiftListRobot?startapp=${wishlist.value.shareId}`
+  const appUrl = `https://t.me/${__TG_BOT_NAME__}?startapp=${wishlist.value.shareId}`
   const shareUrl = new URL('https://t.me/share/url')
   shareUrl.searchParams.set('url', appUrl)
 
@@ -70,7 +70,7 @@ function shareWishlist() {
 }
 
 function createOwnWishlist() {
-  WebApp.openTelegramLink(`https://t.me/GiftListRobot?startapp`)
+  WebApp.openTelegramLink(`https://t.me/${__TG_BOT_NAME__}?startapp`)
 }
 
 watchEffect(() => {

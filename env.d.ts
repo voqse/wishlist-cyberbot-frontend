@@ -7,6 +7,7 @@ declare const __TEST__: boolean
 
 declare const __API_BASE__: string
 declare const __API_WS_BASE__: string
+declare const __TG_BOT_NAME__: string
 
 declare const __DEV_INIT_DATA__: string
 declare const __DEV_START_PARAM__: string

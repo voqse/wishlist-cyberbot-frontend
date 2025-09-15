@@ -47,5 +47,5 @@ jobs:
           port: ${{ secrets.DEPLOY_PORT }}
           key: ${{ secrets.DEPLOY_SSHKEY }}
           source: dist
-          target: /var/www/giftlist.voqse.com
+          target: /var/www/wishlist-frontend
           strip_components: 1
