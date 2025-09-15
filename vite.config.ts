@@ -19,7 +19,11 @@ export default defineConfig(({ mode }) => {
     server: {
       host: true,
       proxy: {
-        '/api': { target: 'http://localhost:3000' },
+        '/api': {
+          target: 'http://localhost:3000',
+          secure: false,
+          ws: true,
+        },
       },
     },
     plugins: [
@@ -41,6 +45,7 @@ export default defineConfig(({ mode }) => {
       __TEST__: JSON.stringify(Boolean(env.TEST_ENV)),
 
       __API_BASE__: JSON.stringify(env.API_BASE),
+      __API_WS_BASE__: JSON.stringify(env.API_WS_BASE),
 
       __DEV_INIT_DATA__: JSON.stringify(env.DEV_INIT_DATA),
       __DEV_START_PARAM__: JSON.stringify(env.DEV_START_PARAM),

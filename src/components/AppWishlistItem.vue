@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useVModel } from '@vueuse/core'
 import style from '@/assets/scss/base.module.scss'
+import AppCheckbox from '@/components/AppCheckbox.vue'
 
 const props = defineProps<{
   modelValue: string
@@ -18,18 +19,14 @@ const modelValue = useVModel(props, 'modelValue', emit)
 <template>
   <li>
     <template v-if="isOwner">
+      <AppCheckbox />
       <input v-model="modelValue" placeholder="Item" type="text" :class="style.appListInput">
       <button v-if="isOwner" @click="emit('delete')">
         Delete
       </button>
     </template>
     <template v-else>
-      <div>
-        Checkbox
-      </div>
-      <div>
-        {{ modelValue }}
-      </div>
+      <AppCheckbox>{{ modelValue }}</AppCheckbox>
     </template>
   </li>
 </template>

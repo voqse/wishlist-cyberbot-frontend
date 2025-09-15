@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Item, User, Wishlist } from '@/api/types'
 import WebApp from '@twa-dev/sdk'
+import { useWebSocket, whenever } from '@vueuse/core'
 import { computed, onMounted, ref, watchEffect } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { auth, getWishlist, saveItems } from '@/api'
@@ -59,6 +60,19 @@ onMounted(async () => {
   if (typeof __API_BASE__ === 'string') {
     currentUser.value = await auth(initData.value)
     wishlist.value = await getWishlist(shareId.value)
+
+    if (!isOwner.value && shareId.value) {
+      const { data } = useWebSocket(`${__API_WS_BASE__}/wishlist/ws/${shareId.value}`)
+
+      whenever(data, () => {
+        try {
+          wishlist.value = JSON.parse(data.value)
+        }
+        catch {
+          console.warn('Unable to parse ws message:', data.value)
+        }
+      })
+    }
   }
 
   // This is a temporary workaround for a blank screen issue on initial load on Android.

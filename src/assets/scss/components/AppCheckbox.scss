@@ -1,0 +1,39 @@
+@mixin style {
+  .appCheckbox {
+    display: grid;
+    grid-template-columns: 1.5rem minmax(0, 1fr);
+    gap: 0 0.75rem;
+    font-size: 1rem;
+  }
+
+  .appCheckboxInput {
+    display: inline-block;
+    flex-shrink: 0;
+    width: 1.5rem;
+    height: 1.5rem;
+    padding: 0;
+    color: var(--tg-theme-text-color);
+    vertical-align: middle;
+    appearance: none;
+    user-select: none;
+    background-color: var(--tg-theme-bg-color, #fff);
+    background-origin: border-box;
+    border: 0.0625rem solid var(--tg-theme-section-separator-color, #f5f5f5);
+    //border-color: var(--tg-theme-section-separator-color, #f5f5f5);
+    //border-width: 0.0625rem;
+    border-radius: 1000rem;
+    print-color-adjust: exact;
+
+    &:checked {
+      color: #fff;
+      background-color: #141414;
+      // TODO check: https://stackoverflow.com/questions/77753947/inline-svg-in-vite-build
+      background-image: url("@/assets/icons/checked.svg?inline");
+      border-color: #141414;
+    }
+  }
+
+  .appCheckboxText {
+    overflow-wrap: break-word;
+  }
+}

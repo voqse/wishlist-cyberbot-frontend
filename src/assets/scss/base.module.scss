@@ -5,6 +5,7 @@
 @use "typography";
 @use "accessibility";
 @use "animations";
+@use "components/AppCheckbox";
 
 @include reset.style();
 @include typography.style();
@@ -12,6 +13,7 @@
 @include animations.style();
 
 // App components
+@include AppCheckbox.style();
 
 // App styles
 body {
