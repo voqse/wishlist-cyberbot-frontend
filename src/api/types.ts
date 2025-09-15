@@ -1,3 +1,5 @@
+type Timestamp = string
+
 export interface User {
   id: number
   firstName: string
@@ -7,8 +9,8 @@ export interface User {
   isPremium?: boolean
   photoUrl?: string
   token: string
-  // createdAt: number
-  // updatedAt: number
+  createdAt: Timestamp
+  updatedAt: Timestamp
 }
 
 export interface Item {
@@ -17,10 +19,10 @@ export interface Item {
   links: string[]
   photos: string[]
   createdBy: User
-  createdAt: number
-  // updatedAt: number
+  createdAt: Timestamp
+  updatedAt: Timestamp
   reservedBy: User | null
-  reservedAt: number | null
+  reservedAt: Timestamp | null
 }
 
 export interface Wishlist {
@@ -29,6 +31,6 @@ export interface Wishlist {
   title: string
   items: Item[]
   createdBy: User
-  createdAt: number
-  // updatedAt: number
+  createdAt: Timestamp
+  updatedAt: Timestamp
 }

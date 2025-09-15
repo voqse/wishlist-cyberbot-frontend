@@ -76,7 +76,7 @@ onMounted(async () => {
     wishlist.value = await getWishlist(shareId.value)
 
     if (!isOwner.value && shareId.value) {
-      const { data } = useWebSocket(`${__API_WS_BASE__}/wishlist/ws/${shareId.value}`, { autoReconnect: true, heartbeat: true })
+      const { data } = useWebSocket(`${__API_WS_BASE__}/wishlist/ws/${shareId.value}`, { autoReconnect: true })
 
       whenever(data, () => {
         try {
