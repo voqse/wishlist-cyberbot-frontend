@@ -40,6 +40,23 @@ export default defineConfig(({ mode }) => {
         '@': resolve('./src'),
       },
     },
+    css: {
+      preprocessorOptions: {
+        scss: {
+          additionalData: (content) => {
+            // Injects a SCSS variable `$vite-dev` that indicates if the build is in development mode
+            return `$vite-dev: ${__DEV__};\n${content}`
+          },
+        },
+      },
+      modules: {
+        // Generates CSS module class names:
+        // - Development: Includes the local class name and a short hash for easier debugging.
+        // - Production: Uses a compact hash-only format for better performance and smaller file sizes.
+        generateScopedName: __DEV__ ? '[local]-[hash:base64:4]' : `[hash:base64:4]`,
+        hashPrefix: `wishlist-`,
+      },
+    },
     define: {
       __DEV__: JSON.stringify(__DEV__),
       __TEST__: JSON.stringify(Boolean(env.TEST_ENV)),
