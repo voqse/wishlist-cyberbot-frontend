@@ -29,9 +29,9 @@ export function saveItems(items: Partial<Item>[]) {
 }
 
 export function itemReserve(itemId: Item['id']) {
-  return request(`/wishlist/items/reserve/${itemId}`, 'POST')
+  return request(`/wishlist/items/reserve/${itemId}`, 'POST', {})
 }
 
 export function itemReserveCancel(itemId: Item['id']) {
-  return request(`/wishlist/items/reserve/cancel/${itemId}`, 'POST')
+  return request(`/wishlist/items/reserve/cancel/${itemId}`, 'POST', {})
 }

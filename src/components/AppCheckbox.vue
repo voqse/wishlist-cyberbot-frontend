@@ -24,8 +24,7 @@ const modelValue = useVModel(props, 'modelValue', emit)
 const checked = ref(false)
 
 function onChecked() {
-  if (!inputRef.value)
-    return
+  if (!inputRef.value) return
   checked.value = inputRef.value.checked
   emit('checked', checked.value)
 }

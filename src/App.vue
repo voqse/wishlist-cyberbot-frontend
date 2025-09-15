@@ -4,7 +4,13 @@ import WebApp from '@twa-dev/sdk'
 import { useDebounceFn, useWebSocket, whenever } from '@vueuse/core'
 import { computed, onMounted, ref, watchEffect } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { auth, getWishlist, saveItems as saveItemsRequest } from '@/api'
+import {
+  auth,
+  getWishlist,
+  itemReserve,
+  itemReserveCancel,
+  saveItems as saveItemsRequest,
+} from '@/api'
 import style from '@/assets/scss/base.module.scss'
 import AppCheckbox from '@/components/AppCheckbox.vue'
 import AppUserPhoto from '@/components/AppUserPhoto.vue'
@@ -43,6 +49,12 @@ function addItem() {
 function removeItem(id: Item['id']) {
   wishlist.value.items = wishlist.value.items.filter(item => item.id !== id)
   saveItems()
+}
+
+function reserveItem(id: Item['id'], reserve: boolean) {
+  reserve
+    ? itemReserve(id)
+    : itemReserveCancel(id)
 }
 
 function shareWishlist() {
@@ -111,7 +123,11 @@ onMounted(async () => {
             </template>
 
             <template v-else>
-              <AppCheckbox :class="style.appListItemCheckboxFullWidth">
+              <AppCheckbox
+                :class="style.appListItemCheckboxFullWidth"
+                :model-value="Boolean(item.reservedBy)"
+                @update:model-value="reserveItem(item.id, $event as boolean)"
+              >
                 {{ item.text }}
               </AppCheckbox>
             </template>
