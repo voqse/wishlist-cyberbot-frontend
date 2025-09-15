@@ -103,14 +103,17 @@ onMounted(async () => {
         <ul v-if="wishlist.items.length" :class="style.appList">
           <li v-for="item in wishlist.items" :key="item.id" :class="style.appListItem">
             <template v-if="isOwner">
-              <AppCheckbox />
+              <AppCheckbox disabled />
               <input v-model="item.text" placeholder="Item" type="text" :class="style.appListInput" @input="saveItems">
               <button v-if="isOwner" @click="removeItem(item.id)">
                 Delete
               </button>
             </template>
+
             <template v-else>
-              <AppCheckbox>{{ item.text }}</AppCheckbox>
+              <AppCheckbox :class="style.appListItemCheckboxFullWidth">
+                {{ item.text }}
+              </AppCheckbox>
             </template>
           </li>
         </ul>

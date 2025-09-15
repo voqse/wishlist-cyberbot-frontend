@@ -47,7 +47,7 @@ watch(modelValue, onChecked, { flush: 'post', deep: true })
         disabled && style.appCheckoxDisabled,
       ]"
     >
-    <span :class="style.appCheckboxText">
+    <span v-if="$slots.default" :class="style.appCheckboxText">
       <slot />
     </span>
   </label>
