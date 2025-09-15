@@ -118,11 +118,9 @@ onMounted(async () => {
           <div :class="style.appTitleText">
             {{ wishlistUserUsername }}
           </div>
-          <div v-if="isOwner">
-            <button :class="style.appListItemAction" @click="shareWishlist">
-              {{ t('common.share') }}
-            </button>
-          </div>
+          <button :class="style.appTitleAction" @click="shareWishlist">
+            {{ t('common.share') }}
+          </button>
         </div>
       </div>
 
@@ -132,7 +130,7 @@ onMounted(async () => {
             <template v-if="isOwner">
               <AppCheckbox disabled />
               <input v-model="item.text" placeholder="Item" type="text" :class="style.appListInput" @input="saveItems">
-              <button v-if="isOwner" @click="removeItem(item.id)">
+              <button :class="style.appListItemAction" @click="removeItem(item.id)">
                 {{ t('common.remove') }}
               </button>
             </template>
@@ -152,24 +150,28 @@ onMounted(async () => {
                     :class="style.appCheckBoxPhoto"
                   />
                 </template>
-                <div>{{ item.text }}</div>
-                <div v-if="Boolean(item.reservedBy)" :class="style.appListItemReserverUsername">
-                  {{ formatUsername(item.reservedBy!) }}
-                </div>
+                <template #default>
+                  <div :class="style.appListItemText">
+                    {{ item.text }}
+                  </div>
+                  <div v-if="Boolean(item.reservedBy)" :class="style.appListItemReserverUsername">
+                    {{ formatUsername(item.reservedBy!) }}
+                  </div>
+                </template>
               </AppCheckbox>
             </template>
           </li>
         </ul>
 
         <template v-if="isOwner">
-          <button :class="style.appListItemAction" @click="addItem">
+          <button :class="style.appListAction" @click="addItem">
             {{ t('wishlist.newItem') }}
           </button>
         </template>
       </div>
 
       <div v-if="!isOwner" :class="style.appPanel">
-        <button :class="style.appListItemAction" @click="createOwnWishlist">
+        <button :class="style.appListAction" @click="createOwnWishlist">
           {{ t('wishlist.newList') }}
         </button>
       </div>
