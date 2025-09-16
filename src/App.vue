@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { VueMessageType } from 'vue-i18n'
 import type { Item, User, Wishlist } from '@/api/types'
 import WebApp from '@twa-dev/sdk'
 import { useDebounceFn, useWebSocket, whenever } from '@vueuse/core'
@@ -17,7 +18,7 @@ import AppUserPhoto from '@/components/AppUserPhoto.vue'
 import { fadeVueTransitionProps } from '@/constants'
 import { setLocale } from '@/i18n.ts'
 
-const { t } = useI18n()
+const { t, tm, rt } = useI18n()
 
 const isReady = ref(false)
 
@@ -34,6 +35,9 @@ const isOwner = computed(() => wishlist.value.createdBy?.id === currentUser.valu
 const wishlistUserUsername = computed(() => wishlist.value
   ? formatUsername(wishlist.value.createdBy)
   : 'Unauthorised')
+
+const placeholders = computed<string[]>(() =>
+  tm('common.placeholder').map((item: VueMessageType) => rt(item)))
 
 function formatUsername(user: User) {
   return [
