@@ -3,7 +3,7 @@ import type { VueMessageType } from 'vue-i18n'
 import type { Item, User, Wishlist } from '@/api/types'
 import WebApp from '@twa-dev/sdk'
 import { useDebounceFn, useWebSocket, whenever } from '@vueuse/core'
-import { computed, onMounted, ref, watchEffect } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
   auth,
@@ -38,6 +38,17 @@ const wishlistUserUsername = computed(() => wishlist.value
 
 const placeholders = computed<string[]>(() =>
   tm('common.placeholder').map((item: VueMessageType) => rt(item)))
+
+const shuffledPlaceholders = computed(() => shuffleArray(placeholders.value))
+
+function shuffleArray<T>(array: T[]): T[] {
+  const newArray = [...array]
+  for (let i = newArray.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [newArray[i], newArray[j]] = [newArray[j], newArray[i]]
+  }
+  return newArray
+}
 
 function formatUsername(user: User) {
   return [
@@ -77,8 +88,8 @@ function createOwnWishlist() {
   WebApp.openTelegramLink(`https://t.me/${__TG_BOT_NAME__}?startapp`)
 }
 
-watchEffect(() => {
-  if (wishlist.value.items.length) return
+watch(() => wishlist.value.items.length, (length) => {
+  if (length) return
   addItem()
 })
 
@@ -130,10 +141,16 @@ onMounted(async () => {
 
       <div :class="style.appPanel">
         <ul v-if="wishlist.items.length" :class="style.appList">
-          <li v-for="item in wishlist.items" :key="item.id" :class="style.appListItem">
+          <li v-for="(item, index) in wishlist.items" :key="item.id" :class="style.appListItem">
             <template v-if="isOwner">
               <AppCheckbox disabled />
-              <input v-model="item.text" placeholder="Item" type="text" :class="style.appListInput" @input="saveItems">
+              <input
+                v-model="item.text"
+                :placeholder="shuffledPlaceholders[index % shuffledPlaceholders.length]"
+                type="text"
+                :class="style.appListInput"
+                @input="saveItems"
+              >
               <button :class="style.appListItemAction" @click="removeItem(item.id)">
                 {{ t('common.remove') }}
               </button>
