@@ -23,6 +23,7 @@ export interface Item {
   updatedAt: Timestamp
   reservedBy: User | null
   reservedAt: Timestamp | null
+  isReserved?: boolean
 }
 
 export interface Wishlist {

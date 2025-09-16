@@ -16,7 +16,8 @@ import style from '@/assets/scss/base.module.scss'
 import AppCheckbox from '@/components/AppCheckbox.vue'
 import AppUserPhoto from '@/components/AppUserPhoto.vue'
 import { fadeVueTransitionProps } from '@/constants'
-import { setLocale } from '@/i18n.ts'
+import { setLocale } from '@/i18n'
+import { shuffleArray } from '@/utils'
 
 const { t, tm, rt } = useI18n()
 
@@ -37,18 +38,7 @@ const wishlistUserUsername = computed(() => wishlist.value
   : 'Unauthorised')
 
 const placeholders = computed<string[]>(() =>
-  tm('common.placeholder').map((item: VueMessageType) => rt(item)))
-
-const shuffledPlaceholders = computed(() => shuffleArray(placeholders.value))
-
-function shuffleArray<T>(array: T[]): T[] {
-  const newArray = [...array]
-  for (let i = newArray.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [newArray[i], newArray[j]] = [newArray[j], newArray[i]]
-  }
-  return newArray
-}
+  shuffleArray(tm('common.placeholder').map((item: VueMessageType) => rt(item))))
 
 function formatUsername(user: User) {
   return [
@@ -57,17 +47,18 @@ function formatUsername(user: User) {
   ].filter(Boolean).join(' ') || `@${user.username}`
 }
 
-const saveItems = useDebounceFn(() => saveItemsRequest(wishlist.value.items), 1000)
+const saveItems = useDebounceFn(async () => saveItemsRequest(wishlist.value.items), 1000)
 
 function addItem() {
   wishlist.value.items.push({
     text: '',
   } as Item)
+  saveItemsRequest(wishlist.value.items)
 }
 
 function removeItem(id: Item['id']) {
-  wishlist.value.items = wishlist.value.items.filter(item => item.id !== id)
-  saveItems()
+  wishlist.value.items = wishlist.value.items.filter(item => item?.id !== id)
+  saveItemsRequest(wishlist.value.items)
 }
 
 function reserveItem(id: Item['id'], reserve: boolean) {
@@ -141,12 +132,12 @@ onMounted(async () => {
 
       <div :class="style.appPanel">
         <ul v-if="wishlist.items.length" :class="style.appList">
-          <li v-for="(item, index) in wishlist.items" :key="item.id" :class="style.appListItem">
-            <template v-if="isOwner">
+          <template v-if="isOwner">
+            <li v-for="(item, index) in wishlist.items" :key="index" :class="style.appListItem">
               <AppCheckbox disabled />
               <input
                 v-model="item.text"
-                :placeholder="shuffledPlaceholders[index % shuffledPlaceholders.length]"
+                :placeholder="placeholders[index % placeholders.length]"
                 type="text"
                 :class="style.appListInput"
                 @input="saveItems"
@@ -154,9 +145,11 @@ onMounted(async () => {
               <button :class="style.appListItemAction" @click="removeItem(item.id)">
                 {{ t('common.remove') }}
               </button>
-            </template>
+            </li>
+          </template>
 
-            <template v-else>
+          <template v-else>
+            <li v-for="(item, index) in wishlist.items.filter((w) => Boolean(w.text))" :key="index" :class="style.appListItem">
               <AppCheckbox
                 :class="style.appListItemCheckboxFullWidth"
                 :model-value="Boolean(item.reservedBy)"
@@ -180,8 +173,8 @@ onMounted(async () => {
                   </div>
                 </template>
               </AppCheckbox>
-            </template>
-          </li>
+            </li>
+          </template>
         </ul>
 
         <template v-if="isOwner">
