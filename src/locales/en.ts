@@ -4,7 +4,7 @@ export default {
     direction: 'ltr',
   },
   app: {
-    title: 'Gift list',
+    title: 'Wishlist Cyberbot',
   },
   common: {
     add: 'Add',

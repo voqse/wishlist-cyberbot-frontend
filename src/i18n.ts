@@ -1,13 +1,28 @@
 import { createI18n } from 'vue-i18n'
 
+import ar from '@/locales/ar'
+import de from '@/locales/de'
 import en from '@/locales/en'
+import es from '@/locales/es'
+import he from '@/locales/he'
+import it from '@/locales/it'
+import pt from '@/locales/pt'
 import ru from '@/locales/ru'
+import uk from '@/locales/uk'
 
 export type Locale = keyof typeof messages
 
+// @keep-sorted
 const messages = {
+  ar,
+  de,
   en,
+  es,
+  he,
+  it,
+  pt,
   ru,
+  uk,
 }
 
 const defaultLocale = 'en'
