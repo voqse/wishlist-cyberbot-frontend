@@ -1,0 +1,17 @@
+@mixin style {
+  .appTextarea {
+    overflow: hidden;
+    overflow-wrap: break-word;
+
+    &[contenteditable][placeholder]:empty::before {
+      content: attr(placeholder);
+      color: var(--tg-theme-hint-color, #888888);
+      pointer-events: none;
+    }
+
+    /* Hides placeholder when element is focused and empty */
+    //&[contenteditable][placeholder]:empty:focus::before {
+    //  content: "";
+    //}
+  }
+}

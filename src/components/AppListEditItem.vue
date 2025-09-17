@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import type { Item } from '@/api/types'
 import { useVModel, whenever } from '@vueuse/core'
-import { nextTick, onMounted, ref } from 'vue'
+import { nextTick, onMounted, ref, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import style from '@/assets/scss/base.module.scss'
 import AppCheckbox from '@/components/AppCheckbox.vue'
+import AppTextarea from '@/components/AppTextarea.vue'
 
 const props = defineProps<{
   modelValue: Item['text']
@@ -19,8 +20,8 @@ const emit = defineEmits<{
 const { t } = useI18n()
 
 const modelValue = useVModel(props, 'modelValue', emit)
-const itemRef = ref<HTMLLIElement>()
-const inputRef = ref<HTMLInputElement>()
+const itemRef = useTemplateRef('itemRef')
+const inputRef = useTemplateRef('inputRef')
 const active = ref(false)
 const readyToRemove = ref(false)
 const steadyToRemove = ref(false)
@@ -56,17 +57,17 @@ function handleFocusOut(event: FocusEvent) {
 }
 
 whenever(modelValue, resetRemovalState)
-// onClickOutside(itemRef, resetRemovalState)
 
 onMounted(async () => {
   await nextTick()
-  inputRef.value?.focus()
+  if (!inputRef.value) return
+  inputRef.value.$el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  inputRef.value.$el.focus()
 })
 
 // Expose element for use with onClickOutside
 defineExpose({
-  el: inputRef,
-  $el: inputRef,
+  inputRef,
 })
 </script>
 
@@ -82,16 +83,16 @@ defineExpose({
     @focusout="handleFocusOut"
   >
     <AppCheckbox disabled />
-    <input
+    <AppTextarea
       ref="inputRef"
       v-model="modelValue"
       type="text"
       :placeholder
-      :class="style.appListInput"
+      :class="style.appListEditItemTextarea"
       tabindex="1"
       @keydown="handleKeyDown"
       @keyup="handleKeyUp"
-    >
+    />
     <button :class="style.appListItemAction" tabindex="2" @click="emit('remove')">
       {{ t('common.remove') }}
     </button>

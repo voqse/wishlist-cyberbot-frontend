@@ -8,6 +8,7 @@
 @use "components/AppList";
 @use "components/AppHeader";
 @use "components/AppCheckbox";
+@use "components/AppTextarea";
 
 @include reset.style();
 @include typography.style();
@@ -18,6 +19,7 @@
 @include AppList.style();
 @include AppHeader.style();
 @include AppCheckbox.style();
+@include AppTextarea.style();
 
 // App styles
 body {
@@ -39,6 +41,7 @@ body {
     var(--tg-content-safe-area-inset-right)
     var(--tg-content-safe-area-inset-bottom)
     var(--tg-content-safe-area-inset-left);
+  overflow: hidden;
   overflow-wrap: break-word;
 }
 

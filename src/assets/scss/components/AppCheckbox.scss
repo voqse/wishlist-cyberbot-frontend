@@ -46,6 +46,7 @@
 
   .appCheckboxText {
     padding-block: 0.75rem;
+    overflow: hidden;
     overflow-wrap: break-word;
 
     .appListItem + .appListItem & {

@@ -23,7 +23,7 @@ async function handleRemove(id: Item['id'], idx: number) {
   if (itemsCount.value === 1) return
   void appStore.removeItem(id)
   await nextTick()
-  itemRefs.value?.[clamp(idx - 1, 0, itemsCount.value)]?.$el.focus()
+  itemRefs.value?.[clamp(idx - 1, 0, itemsCount.value)]?.inputRef?.$el.focus()
 }
 </script>
 
@@ -35,7 +35,6 @@ async function handleRemove(id: Item['id'], idx: number) {
       ref="itemRefs"
       v-model="item.text"
       :placeholder="placeholders[index % placeholders.length]"
-      :class="style.appListItem"
       @update:model-value="appStore.saveItems"
       @remove="handleRemove(item.id, index)"
     />
