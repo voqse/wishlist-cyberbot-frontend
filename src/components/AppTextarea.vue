@@ -28,11 +28,11 @@ function setContent(value: string) {
 }
 
 function handleInput() {
-  const content = getContent()
-  emit('update:modelValue', content)
+  if (!contenteditableRef.value!.textContent) {
+    contenteditableRef.value!.innerHTML = ''
+  }
 
-  if (content) return
-  contenteditableRef.value!.innerHTML = ''
+  emit('update:modelValue', getContent())
 }
 
 function handlePaste(event: any) {
