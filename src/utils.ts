@@ -1,5 +1,9 @@
 import type { User } from '@/api/types'
 
+export function clamp(number: number, min: number, max: number) {
+  return Math.min(Math.max(number, min), max)
+}
+
 export function shuffleArray<T>(array: T[]): T[] {
   const newArray = [...array]
   for (let i = newArray.length - 1; i > 0; i--) {
