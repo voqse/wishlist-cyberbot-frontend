@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Item } from '@/api/types'
-import { onClickOutside, useVModel, whenever } from '@vueuse/core'
+import { useVModel, whenever } from '@vueuse/core'
 import { nextTick, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import style from '@/assets/scss/base.module.scss'
@@ -19,8 +19,9 @@ const emit = defineEmits<{
 const { t } = useI18n()
 
 const modelValue = useVModel(props, 'modelValue', emit)
-const itemRef = ref<HTMLInputElement>()
+const itemRef = ref<HTMLLIElement>()
 const inputRef = ref<HTMLInputElement>()
+const active = ref(false)
 const readyToRemove = ref(false)
 const steadyToRemove = ref(false)
 
@@ -47,8 +48,15 @@ function handleKeyUp(event: KeyboardEvent) {
   steadyToRemove.value = true
 }
 
+function handleFocusOut(event: FocusEvent) {
+  const relatedTarget = event.relatedTarget as HTMLElement | null
+  if (itemRef.value?.contains(relatedTarget)) return
+  resetRemovalState()
+  active.value = false
+}
+
 whenever(modelValue, resetRemovalState)
-onClickOutside(itemRef, resetRemovalState)
+// onClickOutside(itemRef, resetRemovalState)
 
 onMounted(async () => {
   await nextTick()
@@ -64,10 +72,14 @@ defineExpose({
 
 <template>
   <li
-    ref="itemRef" :class="[
+    ref="itemRef"
+    :class="[
       style.appListItem,
+      active && style.appListEditItemActive,
       steadyToRemove && style.appListEditItemRemoving,
     ]"
+    @focusin="active = true"
+    @focusout="handleFocusOut"
   >
     <AppCheckbox disabled />
     <input
@@ -76,10 +88,11 @@ defineExpose({
       type="text"
       :placeholder
       :class="style.appListInput"
+      tabindex="1"
       @keydown="handleKeyDown"
       @keyup="handleKeyUp"
     >
-    <button :class="style.appListItemAction" @click="emit('remove')">
+    <button :class="style.appListItemAction" tabindex="2" @click="emit('remove')">
       {{ t('common.remove') }}
     </button>
   </li>
