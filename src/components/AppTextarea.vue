@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useVModel } from '@vueuse/core'
+import sanitizeHtml from 'sanitize-html'
 import { onMounted, useTemplateRef, watch } from 'vue'
 import style from '@/assets/scss/base.module.scss'
 
@@ -9,18 +9,22 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', value: any): void
+  (e: 'update:modelValue', value: string): void
 }>()
 
+const sanitizeConf = {
+  allowedTags: ['b', 'i', 'a', 'br', 'div'],
+  allowedAttributes: { a: ['href'] },
+}
+
 const contenteditableRef = useTemplateRef('contenteditableRef')
-const modelValue = useVModel(props, 'modelValue', emit)
 
 function getContent() {
-  return contenteditableRef.value!.textContent
+  return sanitizeHtml(contenteditableRef.value!.innerHTML, sanitizeConf)
 }
 
 function setContent(value: string) {
-  contenteditableRef.value!.textContent = value
+  contenteditableRef.value!.innerHTML = sanitizeHtml(value, sanitizeConf)
 }
 
 function handleInput() {
@@ -38,7 +42,7 @@ function handlePaste(event: any) {
 }
 
 onMounted(() => {
-  setContent(modelValue.value ?? '')
+  setContent(props.modelValue ?? '')
 })
 
 watch(() => props.modelValue, (value) => {
@@ -56,7 +60,7 @@ defineExpose({
   <div
     ref="contenteditableRef"
     contenteditable="true"
-    :class="[style.appTextarea, !modelValue && style.appTextareaPlaceholder]"
+    :class="style.appTextarea"
     :placeholder
     @input="handleInput"
     @blur="handleInput"
