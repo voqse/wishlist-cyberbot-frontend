@@ -29,9 +29,7 @@ defineProps<{
         />
       </template>
       <template #default>
-        <div :class="style.appListItemText">
-          {{ item.text }}
-        </div>
+        <div :class="style.appListItemText" v-html="item.text" />
         <div v-if="Boolean(item.reservedBy)" :class="style.appListItemReserverUsername">
           {{ formatUsername(item.reservedBy!) }}
         </div>
