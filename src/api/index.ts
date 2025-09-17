@@ -1,4 +1,5 @@
 import type { Item, User, Wishlist } from '@/api/types'
+import { createWebSocket } from '@/api/utils'
 
 let token: string
 
@@ -34,4 +35,8 @@ export function itemReserve(itemId: Item['id']) {
 
 export function itemReserveCancel(itemId: Item['id']) {
   return request(`/wishlist/items/reserve/cancel/${itemId}`, 'POST', {})
+}
+
+export function subscribeToWishlistUpdates(shareId: Wishlist['shareId']) {
+  return createWebSocket<Wishlist>(`${__API_WS_BASE__}/wishlist/ws/${shareId}`)
 }
