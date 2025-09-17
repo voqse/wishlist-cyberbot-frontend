@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import sanitizeHtml from 'sanitize-html'
+import insane from 'insane'
 import { onMounted, useTemplateRef, watch } from 'vue'
 import style from '@/assets/scss/base.module.scss'
 
@@ -12,19 +12,19 @@ const emit = defineEmits<{
   (e: 'update:modelValue', value: string): void
 }>()
 
-const sanitizeConf = {
-  allowedTags: ['b', 'i', 'a', 'br', 'div'],
-  allowedAttributes: { a: ['href'] },
+const insaneConfig: insane.SanitizeOptions = {
+  allowedTags: ['br', 'div'],
+  allowedAttributes: {},
 }
 
 const contenteditableRef = useTemplateRef('contenteditableRef')
 
 function getContent() {
-  return sanitizeHtml(contenteditableRef.value!.innerHTML, sanitizeConf)
+  return insane(contenteditableRef.value!.innerHTML, insaneConfig)
 }
 
 function setContent(value: string) {
-  contenteditableRef.value!.innerHTML = sanitizeHtml(value, sanitizeConf)
+  contenteditableRef.value!.innerHTML = insane(value, insaneConfig)
 }
 
 function handleInput() {
