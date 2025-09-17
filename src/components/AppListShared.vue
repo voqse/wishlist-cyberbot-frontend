@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Item } from '@/api/types'
+import { computed } from 'vue'
 import { itemReserve, itemReserveCancel } from '@/api'
 import style from '@/assets/scss/base.module.scss'
 import AppCheckbox from '@/components/AppCheckbox.vue'
@@ -7,16 +7,14 @@ import AppUserPhoto from '@/components/AppUserPhoto.vue'
 import { useAppStore } from '@/stores/app'
 import { formatUsername } from '@/utils'
 
-defineProps<{
-  items: Item[]
-}>()
-
 const appStore = useAppStore()
+
+const items = computed(() => appStore.wishlist.items.filter(w => Boolean(w.text)))
 </script>
 
 <template>
-  <ul :class="[style.appList, style.appListView]">
-    <li v-for="(item, index) in items.filter((w) => Boolean(w.text))" :key="index" :class="style.appListItem">
+  <ul :class="[style.appList, style.appListShared]">
+    <li v-for="(item, index) in items" :key="index" :class="style.appListItem">
       <AppCheckbox
         :class="style.appListItemCheckboxFullWidth"
         :model-value="Boolean(item.reservedBy)"

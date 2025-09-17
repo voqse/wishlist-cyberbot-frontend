@@ -3,7 +3,7 @@ import WebApp from '@twa-dev/sdk'
 import { useI18n } from 'vue-i18n'
 import style from '@/assets/scss/base.module.scss'
 import AppListEdit from '@/components/AppListEdit.vue'
-import AppListView from '@/components/AppListView.vue'
+import AppListShared from '@/components/AppListShared.vue'
 import AppUserPhoto from '@/components/AppUserPhoto.vue'
 import { useAppStore } from '@/stores/app'
 
@@ -44,8 +44,8 @@ function createOwnWishlist() {
     </div>
 
     <div :class="style.appPanel">
-      <AppListEdit v-if="appStore.userIsCreator" :items="appStore.wishlist.items" />
-      <AppListView v-else :items="appStore.wishlist.items" />
+      <AppListEdit v-if="appStore.userIsCreator" />
+      <AppListShared v-else />
     </div>
 
     <div v-if="!appStore.userIsCreator" :class="style.appPanel">

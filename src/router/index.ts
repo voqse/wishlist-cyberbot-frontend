@@ -9,7 +9,7 @@ const router = createRouter({
     {
       path: `/`,
       name: 'Home',
-      component: () => import('@/views/WishlistView.vue'),
+      component: () => import('@/views/HomeView.vue'),
     },
     {
       path: `/unauthorised`,
