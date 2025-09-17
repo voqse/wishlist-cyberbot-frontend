@@ -19,3 +19,11 @@ export function formatUsername(user: User) {
     user.lastName,
   ].filter(Boolean).join(' ') || `@${user.username}`
 }
+
+export function linkify(text: string) {
+  const urlRegex = /(\b(https?|ftp|file):\/\/[\w+&@#/%?=~|!:,.;-]*[\w+&@#/%=~|-])|(\bwww\.[\w+&@#/%?=~|!:,.;-]*[\w+&@#/%=~|-])/gi
+  return text.replace(urlRegex, (url) => {
+    const href = url.startsWith('www.') ? `http://${url}` : url
+    return `<a href="${href}" target="_blank" rel="noopener noreferrer">${url}</a>`
+  })
+}

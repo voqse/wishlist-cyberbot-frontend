@@ -4,7 +4,7 @@ import { itemReserve, itemReserveCancel } from '@/api'
 import style from '@/assets/scss/base.module.scss'
 import AppCheckbox from '@/components/AppCheckbox.vue'
 import AppUserPhoto from '@/components/AppUserPhoto.vue'
-import { formatUsername } from '@/utils'
+import { formatUsername, linkify } from '@/utils'
 
 defineProps<{
   item: Item
@@ -29,7 +29,7 @@ defineProps<{
         />
       </template>
       <template #default>
-        <div :class="style.appListItemText" v-html="item.text" />
+        <div :class="style.appListItemText" v-html="linkify(item.text)" />
         <div v-if="Boolean(item.reservedBy)" :class="style.appListItemReserverUsername">
           {{ formatUsername(item.reservedBy!) }}
         </div>
