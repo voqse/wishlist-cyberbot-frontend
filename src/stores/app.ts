@@ -48,6 +48,18 @@ export const useAppStore = defineStore('app', () => {
     return saveItemsDebounced()
   }
 
+  function moveItem(fromIndex: number, toIndex: number) {
+    const items = wishlist.value.items
+    if (fromIndex < 0 || fromIndex >= items.length || toIndex < 0 || toIndex >= items.length) {
+      return
+    }
+
+    // Move item from one position to another
+    const [movedItem] = items.splice(fromIndex, 1)
+    items.splice(toIndex, 0, movedItem)
+    return saveItemsDebounced()
+  }
+
   watch(() => wishlist.value.items.length, (itemsCount) => {
     if (itemsCount) return
     void createItem()
@@ -60,6 +72,7 @@ export const useAppStore = defineStore('app', () => {
     userDisplayName,
     createItem,
     removeItem,
+    moveItem,
     saveItems: saveItemsDebounced,
     wishlist,
     wishlistCreatorUsername,
