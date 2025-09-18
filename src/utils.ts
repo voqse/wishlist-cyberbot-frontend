@@ -71,12 +71,27 @@ export function parseMarkdown(text: string): string {
   }
 
   // Parse unordered lists (lines starting with - or * followed by space)
-  const unorderedListRegex = /^([-*]\s.+$\n?)+/gm
-  result = result.replace(unorderedListRegex, (match) => {
-    const items = match.trim().replace(/^[-*]\s(.+)$/gm, '<li>$1</li>')
-    return `<ul>${items}</ul>`
-  })
-
+  // Group consecutive unordered list items into a single <ul>
+  result = result.split('\n').reduce<{ lines: string[], inList: boolean }>((acc, line) => {
+    const unorderedListItem = /^(\s*)[-*]\s+(.+)$/.exec(line);
+    if (unorderedListItem) {
+      if (!acc.inList) {
+        acc.lines.push('<ul>');
+        acc.inList = true;
+      }
+      acc.lines.push(`<li>${unorderedListItem[2]}</li>`);
+    } else {
+      if (acc.inList) {
+        acc.lines.push('</ul>');
+        acc.inList = false;
+      }
+      acc.lines.push(line);
+    }
+    return acc;
+  }, { lines: [], inList: false }).lines.concat(
+    // Close list if file ends with a list
+    (result.endsWith('\n') ? [] : (result.match(/^(\s*)[-*]\s+(.+)$/) ? ['</ul>'] : []))
+  ).join('\n');
   return result
 }
 
