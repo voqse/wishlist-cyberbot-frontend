@@ -36,13 +36,14 @@ Always reference these instructions first and fallback to search or bash command
 - Lint code: `yarn lint`
   - Takes ~5 seconds. Uses @antfu/eslint-config.
   - Fix issues: `yarn lint:fix`
+  - **RECOMMENDED**: Run `yarn lint:fix` first to immediately fix what can be auto-fixed, then address any remaining issues manually.
   - ALWAYS run linting before committing - CI build (.github/workflows/deploy.yml) will fail otherwise.
 
 ### Testing
 - Run unit tests: `yarn test:unit`
   - Uses Vitest with jsdom environment for Vue component testing.
-  - **KNOWN ISSUE**: Current test setup has router dependency issues. Test fails with "Cannot destructure property 'Component' of 'undefined'".
-  - Takes ~3 seconds when working. NEVER CANCEL. Set timeout to 30+ seconds for test suites.
+  - Tests are currently passing (28 tests in src/__tests__/utils.spec.ts).
+  - Takes ~3 seconds. NEVER CANCEL. Set timeout to 30+ seconds for test suites.
 
 ## Manual Validation Scenarios
 
@@ -117,8 +118,9 @@ yarn build                                   # ~6 seconds, NEVER CANCEL
 yarn dev                                     # Start on https://localhost:5173/
 
 # Testing and quality
-yarn test:unit                               # ~3 seconds when working, NEVER CANCEL
-yarn lint:fix                               # Auto-fix linting issues
+yarn test:unit                               # ~3 seconds, NEVER CANCEL
+yarn lint                                    # ~5 seconds
+yarn lint:fix                               # Auto-fix linting issues - run this first
 
 # Production validation
 yarn build && yarn preview                  # Build then serve on https://localhost:4173/
@@ -134,15 +136,13 @@ The `.github/workflows/deploy.yml` workflow:
 
 ## Known Issues and Workarounds
 
-1. **Test Suite Issues**: Unit tests currently fail due to router setup issues in test environment. The test tries to mount App.vue which uses RouterView without proper router context.
+1. **Peer Dependency Warnings**: @twa-dev/sdk shows peer dependency warnings for React. These are safe to ignore as the SDK works without React in this Vue application.
 
-2. **Peer Dependency Warnings**: @twa-dev/sdk shows peer dependency warnings for React. These are safe to ignore as the SDK works without React in this Vue application.
-
-3. **Telegram Context**: Application requires Telegram Web App context for full functionality. In development, use DEV_INIT_DATA and DEV_START_PARAM environment variables for testing.
+2. **Telegram Context**: Application requires Telegram Web App context for full functionality. In development, use DEV_INIT_DATA and DEV_START_PARAM environment variables for testing.
 
 ## Development Tips
 
-- Always run `yarn lint` before committing to avoid CI failures
+- Always run `yarn lint:fix` before committing to automatically fix common issues, then run `yarn lint` to check for remaining issues
 - Use Vue DevTools browser extension for debugging state and components
 - The app uses CSS modules with SCSS - class names are automatically scoped
 - i18n translations are auto-imported via unplugin-vue-i18n
