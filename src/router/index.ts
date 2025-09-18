@@ -19,7 +19,7 @@ const router = createRouter({
   ],
 })
 
-router.beforeEach(async (to, from) => {
+router.beforeEach(async (to) => {
   const initData = WebApp.initData || __DEV_INIT_DATA__
   const shareId = WebApp.initDataUnsafe.start_param || __DEV_START_PARAM__
   const user = await auth(initData)
