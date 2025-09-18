@@ -96,7 +96,8 @@ function applyInlineMarkdown(text: string): string {
 
   // Strikethrough (~~text~~ and ~text~)
   result = result.replace(/~~([^~]+)~~/g, '<s>$1</s>')
-  result = result.replace(/(?<!~)~([^~\s][^~]*[^~\s])~(?!~)/g, '<s>$1</s>')
+  // Use a compatible regex for single-tilde strikethrough (no lookbehind/lookahead)
+  result = result.replace(/\B~([^~\s][^~]*[^~\s])~\B/g, '<s>$1</s>')
 
   // Bold-italic (***text***)
   result = result.replace(/\*\*\*([^*]+)\*\*\*/g, '<b><i>$1</i></b>')
