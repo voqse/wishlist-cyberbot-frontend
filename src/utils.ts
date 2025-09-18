@@ -146,8 +146,8 @@ function processConsecutiveListItems(tokens: Token[], startIndex: number): {
     }
 
     const content = token.content.trim()
-    const orderedMatch = ORDER_LIST_REGEX.exec(content)
-    const unorderedMatch = UNORDER_LIST_REGEX.exec(content)
+    const orderedMatch = content.match(ORDER_LIST_REGEX)
+    const unorderedMatch = content.match(UNORDER_LIST_REGEX)
 
     // Determine list type from first item or check consistency
     if (orderedMatch) {
@@ -245,9 +245,10 @@ export function parseMarkdown(text: string): string {
 }
 
 // Optimized linkify with single regex operation
-const URL_REGEX = /(\b(?:https?|ftp|file):\/\/[\w+&@#/%?=~|!:,.;-]*[\w+&@#/%=~|-])|(\bwww\.[\w+&@#/%?=~|!:,.;-]*[\w+&@#/%=~|-])/gi
+
 
 export function linkify(text: string): string {
+  const URL_REGEX = /(\b(?:https?|ftp|file):\/\/[\w+&@#/%?=~|!:,.;-]*[\w+&@#/%=~|-])|(\bwww\.[\w+&@#/%?=~|!:,.;-]*[\w+&@#/%=~|-])/gi
   return text.replace(URL_REGEX, (url) => {
     const href = url.startsWith('www.') ? `http://${url}` : url
     return `<a href="${href}" target="_blank" rel="noopener noreferrer">${url}</a>`
