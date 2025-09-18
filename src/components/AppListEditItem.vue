@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Item } from '@/api/types'
-import { useVModel, whenever } from '@vueuse/core'
-import { nextTick, onMounted, ref, useTemplateRef } from 'vue'
+import { useTimeoutFn, useVModel, whenever } from '@vueuse/core'
+import { computed, nextTick, onMounted, ref, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import style from '@/assets/scss/base.module.scss'
 import AppCheckbox from '@/components/AppCheckbox.vue'
@@ -21,53 +21,67 @@ const { t } = useI18n()
 
 const modelValue = useVModel(props, 'modelValue', emit)
 const itemRef = useTemplateRef('itemRef')
-const inputRef = useTemplateRef('inputRef')
+const textareaRef = useTemplateRef('textareaRef')
 const active = ref(false)
 const readyToRemove = ref(false)
-const steadyToRemove = ref(false)
 
 function resetRemovalState() {
   readyToRemove.value = false
-  steadyToRemove.value = false
 }
+
+const holdingBackspaceTimer = useTimeoutFn(() => {}, 200, { immediate: false })
+const holdingBackspace = computed(() => holdingBackspaceTimer.isPending.value)
 
 function handleKeyDown(event: KeyboardEvent) {
   if (event.key !== 'Backspace') return
-  if (modelValue.value) return
+  if (modelValue.value)
+    return holdingBackspaceTimer.start()
   event.preventDefault()
-  readyToRemove.value = true
 
-  if (!steadyToRemove.value) return
-  emit('remove')
+  if (event.repeat)
+    return holdingBackspaceTimer.start()
+
+  if (readyToRemove.value)
+    return emit('remove')
+
+  if (!holdingBackspace.value)
+    return readyToRemove.value = true
+
+  holdingBackspaceTimer.start()
 }
 
 function handleKeyUp(event: KeyboardEvent) {
   if (event.key !== 'Backspace') return
-  if (!readyToRemove.value) return
-  if (modelValue.value) return
+  if (modelValue.value)
+    return holdingBackspaceTimer.start()
   event.preventDefault()
-  steadyToRemove.value = true
+
+  holdingBackspaceTimer.start()
 }
 
 function handleFocusOut(event: FocusEvent) {
   const relatedTarget = event.relatedTarget as HTMLElement | null
   if (itemRef.value?.contains(relatedTarget)) return
+
   resetRemovalState()
   active.value = false
 }
+
+whenever(active, holdingBackspaceTimer.start)
 
 whenever(modelValue, resetRemovalState)
 
 onMounted(async () => {
   await nextTick()
-  if (!inputRef.value) return
-  inputRef.value.$el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-  inputRef.value.$el.focus()
+  if (!textareaRef.value) return
+  textareaRef.value.$el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  textareaRef.value.$el.focus()
 })
 
-// Expose element for use with onClickOutside
 defineExpose({
-  inputRef,
+  el: itemRef,
+  $el: itemRef,
+  focus: () => textareaRef.value?.focus(),
 })
 </script>
 
@@ -77,14 +91,14 @@ defineExpose({
     :class="[
       style.appListItem,
       active && style.appListEditItemActive,
-      steadyToRemove && style.appListEditItemRemoving,
+      readyToRemove && style.appListEditItemRemoving,
     ]"
     @focusin="active = true"
     @focusout="handleFocusOut"
   >
     <AppCheckbox disabled />
     <AppTextarea
-      ref="inputRef"
+      ref="textareaRef"
       v-model="modelValue"
       type="text"
       :placeholder

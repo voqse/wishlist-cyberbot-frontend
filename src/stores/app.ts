@@ -4,7 +4,7 @@ import { defineStore } from 'pinia'
 import { computed, onScopeDispose, ref, watch } from 'vue'
 import {
   getWishlist,
-  saveItems as saveItemsRequest,
+  saveItems,
   subscribeToWishlistUpdates,
 } from '@/api'
 import { setLocale } from '@/i18n'
@@ -31,22 +31,21 @@ export const useAppStore = defineStore('app', () => {
     onScopeDispose(() => ws.close(), true)
   }
 
-  const saveItemsImmediate = async () => {
-    wishlist.value = await saveItemsRequest(wishlist.value.items)
-  }
-
-  const saveItems = useDebounceFn(saveItemsImmediate, 5000)
+  const saveItemsDebounced = useDebounceFn(async () => {
+    wishlist.value = await saveItems(wishlist.value.items)
+  }, 5000)
 
   function createItem() {
     wishlist.value.items.push({
       text: '',
     } as Item)
-    return saveItemsImmediate()
+    return saveItemsDebounced()
   }
 
   function removeItem(id: Item['id']) {
-    wishlist.value.items = wishlist.value.items.filter(item => item?.id !== id)
-    return saveItemsImmediate()
+    const idx = wishlist.value.items.findIndex(item => item?.id === id)
+    wishlist.value.items.splice(idx, 1)
+    return saveItemsDebounced()
   }
 
   watch(() => wishlist.value.items.length, (itemsCount) => {
@@ -61,7 +60,7 @@ export const useAppStore = defineStore('app', () => {
     userDisplayName,
     createItem,
     removeItem,
-    saveItems,
+    saveItems: saveItemsDebounced,
     wishlist,
     wishlistCreatorUsername,
   }

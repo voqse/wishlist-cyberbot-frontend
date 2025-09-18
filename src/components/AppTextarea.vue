@@ -23,7 +23,7 @@ function getContent() {
   return insane(contenteditableRef.value!.innerHTML, insaneConfig)
 }
 
-function setContent(value: string) {
+function setContent(value: string = '') {
   contenteditableRef.value!.innerHTML = insane(value, insaneConfig)
 }
 
@@ -42,17 +42,18 @@ function handlePaste(event: any) {
 }
 
 onMounted(() => {
-  setContent(props.modelValue ?? '')
+  setContent(props.modelValue)
 })
 
 watch(() => props.modelValue, (value) => {
   if (value === getContent()) return
-  setContent(value ?? '')
+  setContent(value)
 })
 
 defineExpose({
   el: contenteditableRef,
   $el: contenteditableRef,
+  focus: () => contenteditableRef.value?.focus(),
 })
 </script>
 
@@ -62,6 +63,7 @@ defineExpose({
     contenteditable="true"
     :class="style.appTextarea"
     :placeholder
+    tabindex="1"
     @input="handleInput"
     @blur="handleInput"
     @paste="handlePaste"
