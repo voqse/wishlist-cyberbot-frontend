@@ -67,5 +67,8 @@ export default defineConfig(({ mode }) => {
       __DEV_INIT_DATA__: JSON.stringify(env.DEV_INIT_DATA),
       __DEV_START_PARAM__: JSON.stringify(env.DEV_START_PARAM),
     },
+    test: {
+      environment: 'jsdom',
+    },
   }
 })
