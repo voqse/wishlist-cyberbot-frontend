@@ -88,9 +88,9 @@ describe('markdown formatting', () => {
     expect(result).toBe('<div>Content</div><div></br></div><div>More content</div>')
   })
 
-  it('handles div lists with empty divs preserved', () => {
+  it('handles div lists separated by empty divs', () => {
     const result = parseMarkdown('<div>1. First item</div><div><br></div><div>2. Second item</div>')
-    expect(result).toBe('<ol><li>First item</li><li>Second item</li></ol><div><br></div>')
+    expect(result).toBe('<ol><li>First item</li></ol><div><br></div><ol><li>Second item</li></ol>')
   })
 
   it('applies markdown formatting to div content', () => {
@@ -98,17 +98,17 @@ describe('markdown formatting', () => {
     expect(result).toBe('<div>This <b>bold</b> text in div</div>')
   })
 
-  it('handles complex @voqse case with missing line 3 and preserved empty div', () => {
+  it('handles complex @voqse case with missing line 3 and separate lists', () => {
     const input = '<div>1. ✅ Bold with **text** or __text__ → <b>text</b></div><div>2. ✅ Italic with *text* or _text_ → <i>text</i></div><div><br></div><div>4. ✅ Bold and nested italic **_extremely_ important** → <b><i>extremely</i> important</b></div><div>5. ✅ All bold and italic ***text*** → <b><i>text</i></b></div>'
     const result = parseMarkdown(input)
 
-    // Should create one continuous list with all items in order, and preserve the empty div
-    expect(result).toBe('<ol><li>✅ Bold with <b>text</b> or <b>text</b> → <b>text</b></li><li>✅ Italic with <i>text</i> or <i>text</i> → <i>text</i></li><li>✅ Bold and nested italic <b><i>extremely</i> important</b> → <b><i>extremely</i> important</b></li><li>✅ All bold and italic <b><i>text</i></b> → <b><i>text</i></b></li></ol><div><br></div>')
+    // Should create separate lists when interrupted by empty div, preserving the empty div
+    expect(result).toBe('<ol><li>✅ Bold with <b>text</b> or <b>text</b> → <b>text</b></li><li>✅ Italic with <i>text</i> or <i>text</i> → <i>text</i></li></ol><div><br></div><ol><li>✅ Bold and nested italic <b><i>extremely</i> important</b> → <b><i>extremely</i> important</b></li><li>✅ All bold and italic <b><i>text</i></b> → <b><i>text</i></b></li></ol>')
   })
 
-  it('handles mixed content with divs and text', () => {
+  it('handles mixed content with divs and text creating separate lists', () => {
     const result = parseMarkdown('Some text<div>1. List item</div>More text<div>2. Another item</div>End text')
-    expect(result).toBe('Some text<ol><li>List item</li><li>Another item</li></ol>More textEnd text')
+    expect(result).toBe('Some text<ol><li>List item</li></ol>More text<ol><li>Another item</li></ol>End text')
   })
 
   it('validates closing tags for markdown elements', () => {
@@ -117,10 +117,10 @@ describe('markdown formatting', () => {
     expect(parseMarkdown('~~strike')).toBe('~~strike') // No closing, should not format
   })
 
-  it('handles nested lists correctly by type separation', () => {
+  it('handles consecutive lists by type creating separate lists when mixed', () => {
     const input = '<div>1. First ordered</div><div>- Unordered item</div><div>2. Second ordered</div>'
-    // Should group all ordered items together and all unordered items together
-    const expected = '<ol><li>First ordered</li><li>Second ordered</li></ol><ul><li>Unordered item</li></ul>'
+    // Should create separate lists when different types interrupt the sequence
+    const expected = '<ol><li>First ordered</li></ol><ul><li>Unordered item</li></ul><ol><li>Second ordered</li></ol>'
     expect(parseMarkdown(input)).toBe(expected)
   })
 
@@ -143,5 +143,13 @@ describe('markdown formatting', () => {
   it('ignores unclosed markdown elements', () => {
     const result = parseMarkdown('**unclosed bold and *unclosed italic and ~~unclosed strike')
     expect(result).toBe('**unclosed bold and *unclosed italic and ~~unclosed strike')
+  })
+
+  it('handles @voqse specific requirement: only consecutive divs create lists', () => {
+    // This test validates the exact behavior requested by @voqse
+    const input = '<div>2. Item</div><div>3. Item</div>...any content here...<div>4. Item</div><div>5. Item</div>'
+    const result = parseMarkdown(input)
+    // Should create two separate lists due to the text content in between
+    expect(result).toBe('<ol><li>Item</li><li>Item</li></ol>...any content here...<ol><li>Item</li><li>Item</li></ol>')
   })
 })

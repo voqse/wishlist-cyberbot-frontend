@@ -123,80 +123,97 @@ export function parseMarkdown(text: string): string {
   // Step 1: Tokenize the input
   const tokens = tokenize(text)
 
-  // Step 2: We don't need to parse list items separately since we handle them inline
-
-  // Step 3: Group ALL list items by type (ignore intervening content for list grouping)
+  // Step 2: Group consecutive list items only
   const result: string[] = []
-  const processedTokens = new Set<number>()
+  let i = 0
 
-  // First, collect all consecutive ordered lists
-  const orderedItems: ListItem[] = []
-  const unorderedItems: ListItem[] = []
-
-  for (let i = 0; i < tokens.length; i++) {
-    if (processedTokens.has(i)) continue
-
+  while (i < tokens.length) {
     const token = tokens[i]
 
-    // Check if this token is a list item
     if (token.type === 'div' && token.content.trim()) {
       const content = token.content.trim()
       const orderedMatch = content.match(/^(\d+)\.\s(.+)$/)
       const unorderedMatch = content.match(/^[-*]\s(.+)$/)
 
-      if (orderedMatch) {
-        orderedItems.push({
-          type: 'ordered',
-          number: Number.parseInt(orderedMatch[1], 10),
-          content: orderedMatch[2],
-        })
-        processedTokens.add(i)
-      }
-      else if (unorderedMatch) {
-        unorderedItems.push({
-          type: 'unordered',
-          content: unorderedMatch[1],
-        })
-        processedTokens.add(i)
+      if (orderedMatch || unorderedMatch) {
+        // Found start of a list - collect consecutive list items of the same type
+        const listItems: ListItem[] = []
+        const isOrderedList = Boolean(orderedMatch)
+
+        // Add the first item
+        if (orderedMatch) {
+          listItems.push({
+            type: 'ordered',
+            number: Number.parseInt(orderedMatch[1], 10),
+            content: orderedMatch[2],
+          })
+        }
+        else if (unorderedMatch) {
+          listItems.push({
+            type: 'unordered',
+            content: unorderedMatch[1],
+          })
+        }
+
+        // Look ahead for consecutive list items of the same type
+        let j = i + 1
+        while (j < tokens.length) {
+          const nextToken = tokens[j]
+
+          if (nextToken.type === 'div' && nextToken.content.trim()) {
+            const nextContent = nextToken.content.trim()
+            const nextOrderedMatch = nextContent.match(/^(\d+)\.\s(.+)$/)
+            const nextUnorderedMatch = nextContent.match(/^[-*]\s(.+)$/)
+
+            // Check if it's the same type of list
+            if (isOrderedList && nextOrderedMatch) {
+              listItems.push({
+                type: 'ordered',
+                number: Number.parseInt(nextOrderedMatch[1], 10),
+                content: nextOrderedMatch[2],
+              })
+              j++
+            }
+            else if (!isOrderedList && nextUnorderedMatch) {
+              listItems.push({
+                type: 'unordered',
+                content: nextUnorderedMatch[1],
+              })
+              j++
+            }
+            else {
+              // Different content type - break the consecutive sequence
+              break
+            }
+          }
+          else {
+            // Non-div content or empty div - break the consecutive sequence
+            break
+          }
+        }
+
+        // Generate the list HTML
+        if (isOrderedList) {
+          listItems.sort((a, b) => (a.number || 0) - (b.number || 0))
+          const listHtml = listItems.map(item =>
+            `<li>${applyInlineMarkdown(item.content)}</li>`,
+          ).join('')
+          result.push(`<ol>${listHtml}</ol>`)
+        }
+        else {
+          const listHtml = listItems.map(item =>
+            `<li>${applyInlineMarkdown(item.content)}</li>`,
+          ).join('')
+          result.push(`<ul>${listHtml}</ul>`)
+        }
+
+        // Move to the next unprocessed token
+        i = j
+        continue
       }
     }
-  }
 
-  // Now process tokens in order, but consolidate lists
-  let hasAddedOrderedList = false
-  let hasAddedUnorderedList = false
-
-  for (let i = 0; i < tokens.length; i++) {
-    const token = tokens[i]
-
-    if (processedTokens.has(i)) {
-      // This is a list item - add the consolidated list if we haven't already
-      const content = token.content.trim()
-      const orderedMatch = content.match(/^(\d+)\.\s(.+)$/)
-      const unorderedMatch = content.match(/^[-*]\s(.+)$/)
-
-      if (orderedMatch && !hasAddedOrderedList) {
-        // Add all ordered items as one consolidated list
-        orderedItems.sort((a, b) => (a.number || 0) - (b.number || 0))
-        const listHtml = orderedItems.map(item =>
-          `<li>${applyInlineMarkdown(item.content)}</li>`,
-        ).join('')
-        result.push(`<ol>${listHtml}</ol>`)
-        hasAddedOrderedList = true
-      }
-      else if (unorderedMatch && !hasAddedUnorderedList) {
-        // Add all unordered items as one consolidated list
-        const listHtml = unorderedItems.map(item =>
-          `<li>${applyInlineMarkdown(item.content)}</li>`,
-        ).join('')
-        result.push(`<ul>${listHtml}</ul>`)
-        hasAddedUnorderedList = true
-      }
-      // Skip adding individual list items since we've added the consolidated list
-      continue
-    }
-
-    // Add non-list content
+    // Not a list item - process normally
     if (token.type === 'empty_div') {
       // Preserve empty divs as intentional empty lines
       result.push(token.raw)
@@ -209,6 +226,8 @@ export function parseMarkdown(text: string): string {
       // Text content with markdown formatting applied
       result.push(applyInlineMarkdown(token.content))
     }
+
+    i++
   }
 
   return result.join('')
