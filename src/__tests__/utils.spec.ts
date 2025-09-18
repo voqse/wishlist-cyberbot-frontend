@@ -51,14 +51,40 @@ describe('markdown formatting', () => {
     const result = parseMarkdown(`1. First item
 2. Second item
 3. Third item`)
-    expect(result).toBe('<ol><li>First item</li>\n<li>Second item</li>\n<li>Third item</li></ol>')
+    expect(result).toBe('<ol>\n<li>First item</li>\n<li>Second item</li>\n<li>Third item</li>\n</ol>')
   })
 
   it('parses unordered lists correctly', () => {
     const result = parseMarkdown(`- First item
 - Second item
 * Third item`)
-    expect(result).toBe('<ul><li>First item</li>\n<li>Second item</li>\n<li>Third item</li></ul>')
+    expect(result).toBe('<ul>\n<li>First item</li>\n<li>Second item</li>\n<li>Third item</li>\n</ul>')
+  })
+
+  // New tests for div-based lists (contenteditable compatibility)
+  it('parses div-based ordered lists correctly', () => {
+    const result = parseMarkdown('<div>1. First item</div><div>2. Second item</div><div>3. Third item</div>')
+    expect(result).toBe('<ol><li>First item</li><li>Second item</li><li>Third item</li></ol>')
+  })
+
+  it('parses div-based unordered lists correctly', () => {
+    const result = parseMarkdown('<div>- First item</div><div>* Second item</div><div>- Third item</div>')
+    expect(result).toBe('<ul><li>First item</li><li>Second item</li><li>Third item</li></ul>')
+  })
+
+  it('handles mixed div-based and text content', () => {
+    const result = parseMarkdown('Some text<div>1. First item</div><div>2. Second item</div>More text')
+    expect(result).toBe('Some text<ol><li>First item</li><li>Second item</li></ol>More text')
+  })
+
+  it('handles div-based lists with formatting inside', () => {
+    const result = parseMarkdown('<div>1. **Bold** item</div><div>2. _Italic_ item</div>')
+    expect(result).toBe('<ol><li><b>Bold</b> item</li><li><i>Italic</i> item</li></ol>')
+  })
+
+  it('does not convert non-list divs', () => {
+    const result = parseMarkdown('<div>Regular content</div><div>Another div</div>')
+    expect(result).toBe('<div>Regular content</div><div>Another div</div>')
   })
 
   it('formatText combines markdown and linkify correctly', () => {

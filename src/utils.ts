@@ -23,6 +23,53 @@ export function formatUsername(user: User) {
 export function parseMarkdown(text: string): string {
   let result = text
 
+  // Parse div-based lists first (for contenteditable compatibility)
+  // Handle consecutive div elements that contain list patterns
+
+  // Parse div-based ordered lists: <div>1. item</div><div>2. item</div> -> <ol><li>item</li><li>item</li></ol>
+  result = result.replace(/(?:<div[^>]*>(\d+\.[^<]+)<\/div>\s*)+/g, (match) => {
+    // Extract all div contents that match ordered list pattern
+    const divMatches = match.match(/<div[^>]*>(\d+\.[^<]+)<\/div>/g)
+    if (!divMatches) return match
+
+    let hasOrderedItems = false
+    const listItems = divMatches.map((divMatch) => {
+      const content = divMatch.match(/<div[^>]*>(\d+\.([^<]+))<\/div>/)
+      if (content && content[2]) {
+        hasOrderedItems = true
+        return `<li>${content[2].trim()}</li>`
+      }
+      return null
+    }).filter(Boolean)
+
+    if (hasOrderedItems && listItems.length > 0) {
+      return `<ol>${listItems.join('')}</ol>`
+    }
+    return match
+  })
+
+  // Parse div-based unordered lists: <div>- item</div><div>* item</div> -> <ul><li>item</li><li>item</li></ul>
+  result = result.replace(/(?:<div[^>]*>[-*][^<]+<\/div>\s*)+/g, (match) => {
+    // Extract all div contents that match unordered list pattern
+    const divMatches = match.match(/<div[^>]*>[-*][^<]+<\/div>/g)
+    if (!divMatches) return match
+
+    let hasUnorderedItems = false
+    const listItems = divMatches.map((divMatch) => {
+      const content = divMatch.match(/<div[^>]*>[-*]([^<]+)<\/div>/)
+      if (content && content[1]) {
+        hasUnorderedItems = true
+        return `<li>${content[1].trim()}</li>`
+      }
+      return null
+    }).filter(Boolean)
+
+    if (hasUnorderedItems && listItems.length > 0) {
+      return `<ul>${listItems.join('')}</ul>`
+    }
+    return match
+  })
+
   // Parse strikethrough first
   result = result.replace(/~~([^~]+)~~/g, '<s>$1</s>')
   result = result.replace(/~([^~]+)~/g, '<s>$1</s>')
@@ -36,62 +83,69 @@ export function parseMarkdown(text: string): string {
 
   // Parse italic (both * and _), but handle nested italic in bold
   // To avoid matching inside HTML tags, split by tags and only process text nodes
-  result = result.split(/(<[^>]+>)/g).map((segment, idx) => {
+  result = result.split(/(<[^>]+>)/g).map((segment) => {
     // Only process segments that are not HTML tags
-    if (segment.startsWith('<') && segment.endsWith('>')) return segment;
+    if (segment.startsWith('<') && segment.endsWith('>')) return segment
     // Replace *italic* and _italic_ only outside tags
-    let s = segment.replace(/\*([^*]+)\*/g, '<i>$1</i>');
-    s = s.replace(/_([^_]+)_/g, '<i>$1</i>');
-    return s;
-  }).join('');
+    let s = segment.replace(/\*([^*]+)\*/g, '<i>$1</i>')
+    s = s.replace(/_([^_]+)_/g, '<i>$1</i>')
+    return s
+  }).join('')
 
   // Parse ordered lists (lines starting with numbers followed by a dot and space)
   {
-    const lines = result.split('\n');
-    let inList = false;
-    let newLines: string[] = [];
+    const lines = result.split('\n')
+    let inList = false
+    const newLines: string[] = []
     for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      if (/^\d+\.\s+/.test(line)) {
+      const line = lines[i]
+      if (/^\d+\./.test(line)) {
         if (!inList) {
-          inList = true;
-          newLines.push('<ol>');
+          inList = true
+          newLines.push('<ol>')
         }
-        newLines.push(line.replace(/^\d+\.\s+(.+)$/, '<li>$1</li>'));
+        newLines.push(line.replace(/^\d+\.\s(.+)$/, '<li>$1</li>'))
         // If next line is not a list item, close the list
-        if (i + 1 >= lines.length || !/^\d+\.\s+/.test(lines[i + 1])) {
-          newLines.push('</ol>');
-          inList = false;
+        if (i + 1 >= lines.length || !/^\d+\./.test(lines[i + 1])) {
+          newLines.push('</ol>')
+          inList = false
         }
-      } else {
-        newLines.push(line);
+      }
+      else {
+        newLines.push(line)
       }
     }
-    result = newLines.join('\n');
+    result = newLines.join('\n')
   }
 
   // Parse unordered lists (lines starting with - or * followed by space)
   // Group consecutive unordered list items into a single <ul>
-  result = result.split('\n').reduce<{ lines: string[], inList: boolean }>((acc, line) => {
-    const unorderedListItem = /^(\s*)[-*]\s+(.+)$/.exec(line);
+  const unorderedListResult = result.split('\n').reduce<{ lines: string[], inList: boolean }>((acc, line) => {
+    const unorderedListItem = /^[-*]\s(.+)$/.exec(line)
     if (unorderedListItem) {
       if (!acc.inList) {
-        acc.lines.push('<ul>');
-        acc.inList = true;
+        acc.lines.push('<ul>')
+        acc.inList = true
       }
-      acc.lines.push(`<li>${unorderedListItem[2]}</li>`);
-    } else {
-      if (acc.inList) {
-        acc.lines.push('</ul>');
-        acc.inList = false;
-      }
-      acc.lines.push(line);
+      acc.lines.push(`<li>${unorderedListItem[1]}</li>`)
     }
-    return acc;
-  }, { lines: [], inList: false }).lines.concat(
-    // Close list if file ends with a list
-    (result.endsWith('\n') ? [] : (result.match(/^(\s*)[-*]\s+(.+)$/) ? ['</ul>'] : []))
-  ).join('\n');
+    else {
+      if (acc.inList) {
+        acc.lines.push('</ul>')
+        acc.inList = false
+      }
+      acc.lines.push(line)
+    }
+    return acc
+  }, { lines: [], inList: false })
+
+  // Close list if we ended with a list item
+  if (unorderedListResult.inList) {
+    unorderedListResult.lines.push('</ul>')
+  }
+
+  result = unorderedListResult.lines.join('\n')
+
   return result
 }
 
