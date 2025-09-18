@@ -23,14 +23,20 @@ export function formatUsername(user: User) {
 export function parseMarkdown(text: string): string {
   let result = text
 
+  // Parse strikethrough first
+  result = result.replace(/~~([^~]+)~~/g, '<s>$1</s>')
+  result = result.replace(/~([^~]+)~/g, '<s>$1</s>')
+
   // Parse bold-italic first (must be before bold and italic)
   result = result.replace(/\*\*\*([^*]+)\*\*\*/g, '<b><i>$1</i></b>')
 
-  // Parse bold
+  // Parse bold (both ** and __)
   result = result.replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
+  result = result.replace(/__([^_]+)__/g, '<b>$1</b>')
 
-  // Parse italic
+  // Parse italic (both * and _), but handle nested italic in bold
   result = result.replace(/\*([^*]+)\*/g, '<i>$1</i>')
+  result = result.replace(/_([^_]+)_/g, '<i>$1</i>')
 
   // Parse ordered lists (lines starting with numbers followed by a dot and space)
   const orderedListRegex = /^(\d+\.\s.+$\n?)+/gm
