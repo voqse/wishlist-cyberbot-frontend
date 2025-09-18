@@ -23,6 +23,12 @@ export function formatUsername(user: User) {
 export function parseMarkdown(text: string): string {
   let result = text
 
+  // Handle HTML entities and normalize <br> tags to newlines first
+  result = result.replace(/<br\s*\/?>/gi, '\n')
+  result = result.replace(/&lt;/g, '<')
+  result = result.replace(/&gt;/g, '>')
+  result = result.replace(/&amp;/g, '&')
+
   // Parse div-based lists first (for contenteditable compatibility)
   // Handle consecutive div elements that contain list patterns
 
@@ -70,7 +76,69 @@ export function parseMarkdown(text: string): string {
     return match
   })
 
-  // Parse strikethrough first
+  // Parse text-based ordered lists (lines starting with numbers followed by a dot and space)
+  {
+    const lines = result.split('\n')
+    let inList = false
+    const newLines: string[] = []
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim()
+      if (/^\d+\./.test(line)) {
+        if (!inList) {
+          inList = true
+          newLines.push('<ol>')
+        }
+        newLines.push(line.replace(/^\d+\.\s(.+)$/, '<li>$1</li>'))
+        // If next line is not a list item, close the list
+        const nextLine = i + 1 < lines.length ? lines[i + 1].trim() : ''
+        if (!nextLine || !/^\d+\./.test(nextLine)) {
+          newLines.push('</ol>')
+          inList = false
+        }
+      }
+      else {
+        if (inList) {
+          newLines.push('</ol>')
+          inList = false
+        }
+        newLines.push(line)
+      }
+    }
+    result = newLines.join('\n')
+  }
+
+  // Parse text-based unordered lists (lines starting with - or * followed by space)
+  {
+    const lines = result.split('\n')
+    let inList = false
+    const newLines: string[] = []
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim()
+      if (/^[-*]\s/.test(line)) {
+        if (!inList) {
+          inList = true
+          newLines.push('<ul>')
+        }
+        newLines.push(line.replace(/^[-*]\s(.+)$/, '<li>$1</li>'))
+        // If next line is not a list item, close the list
+        const nextLine = i + 1 < lines.length ? lines[i + 1].trim() : ''
+        if (!nextLine || !/^[-*]\s/.test(nextLine)) {
+          newLines.push('</ul>')
+          inList = false
+        }
+      }
+      else {
+        if (inList) {
+          newLines.push('</ul>')
+          inList = false
+        }
+        newLines.push(line)
+      }
+    }
+    result = newLines.join('\n')
+  }
+
+  // Parse strikethrough first (fix regex to prevent empty matches)
   result = result.replace(/~~([^~]+)~~/g, '<s>$1</s>')
   result = result.replace(/~([^~]+)~/g, '<s>$1</s>')
 
@@ -86,7 +154,7 @@ export function parseMarkdown(text: string): string {
   result = result.split(/(<[^>]+>)/g).map((segment) => {
     // Only process segments that are not HTML tags
     if (segment.startsWith('<') && segment.endsWith('>')) return segment
-    // Replace *italic* and _italic_ only outside tags
+    // Replace *italic* and _italic_ only outside tags (fix regex to prevent empty matches)
     let s = segment.replace(/\*([^*]+)\*/g, '<i>$1</i>')
     s = s.replace(/_([^_]+)_/g, '<i>$1</i>')
     return s

@@ -47,6 +47,21 @@ describe('markdown formatting', () => {
     expect(result).toBe('Mix of <b>bold</b>, <i>italic</i>, <s>strikethrough</s> and <b><i>all</i></b>')
   })
 
+  // Text-based list tests (restored)
+  it('parses text-based ordered lists correctly', () => {
+    const result = parseMarkdown(`1. First item
+2. Second item
+3. Third item`)
+    expect(result).toBe('<ol>\n<li>First item</li>\n<li>Second item</li>\n<li>Third item</li>\n</ol>')
+  })
+
+  it('parses text-based unordered lists correctly', () => {
+    const result = parseMarkdown(`- First item
+- Second item
+* Third item`)
+    expect(result).toBe('<ul>\n<li>First item</li>\n<li>Second item</li>\n<li>Third item</li>\n</ul>')
+  })
+
   // Tests for div-based lists (contenteditable compatibility)
   it('parses div-based ordered lists correctly', () => {
     const result = parseMarkdown('<div>1. First item</div><div>2. Second item</div><div>3. Third item</div>')
@@ -71,6 +86,35 @@ describe('markdown formatting', () => {
   it('does not convert non-list divs', () => {
     const result = parseMarkdown('<div>Regular content</div><div>Another div</div>')
     expect(result).toBe('<div>Regular content</div><div>Another div</div>')
+  })
+
+  // Tests for HTML entity handling and br tag normalization
+  it('handles HTML entities correctly', () => {
+    const result = parseMarkdown('Text with &lt;b&gt;tag&lt;/b&gt; entities')
+    expect(result).toBe('Text with <b>tag</b> entities')
+  })
+
+  it('normalizes br tags to newlines', () => {
+    const result = parseMarkdown('Line 1<br>Line 2<br />Line 3')
+    expect(result).toBe('Line 1\nLine 2\nLine 3')
+  })
+
+  it('handles complex mixed content with entities and br tags', () => {
+    const input = `1. ✅ Bold with **text** or __text__ → &lt;b&gt;text&lt;/b&gt;<br>2. ✅ Italic with *text* or _text_ → &lt;i&gt;text&lt;/i&gt;`
+    const result = parseMarkdown(input)
+    expect(result).toContain('<ol>')
+    expect(result).toContain('<li>✅ Bold with <b>text</b> or <b>text</b> → <b>text</b></li>')
+    expect(result).toContain('<li>✅ Italic with <i>text</i> or <i>text</i> → <i>text</i></li>')
+    expect(result).toContain('</ol>')
+  })
+
+  // Test to prevent empty matches
+  it('prevents empty HTML tags with improved regex', () => {
+    const result = parseMarkdown('Text with ** and __ and * and _ and ~~ and ~')
+    // Should not create empty tags
+    expect(result).not.toContain('<b></b>')
+    expect(result).not.toContain('<i></i>')
+    expect(result).not.toContain('<s></s>')
   })
 
   it('formatText combines markdown and linkify correctly', () => {
