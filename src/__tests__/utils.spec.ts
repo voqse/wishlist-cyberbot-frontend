@@ -78,19 +78,19 @@ describe('markdown formatting', () => {
     expect(result).toBe('<div>Regular content</div><div>Another div</div>')
   })
 
-  it('ignores empty divs with <br>', () => {
+  it('preserves empty divs with <br> as intentional empty lines', () => {
     const result = parseMarkdown('<div>Content</div><div><br></div><div>More content</div>')
-    expect(result).toBe('<div>Content</div><div>More content</div>')
+    expect(result).toBe('<div>Content</div><div><br></div><div>More content</div>')
   })
 
-  it('ignores empty divs with </br>', () => {
+  it('preserves empty divs with </br> as intentional empty lines', () => {
     const result = parseMarkdown('<div>Content</div><div></br></div><div>More content</div>')
-    expect(result).toBe('<div>Content</div><div>More content</div>')
+    expect(result).toBe('<div>Content</div><div></br></div><div>More content</div>')
   })
 
-  it('handles div lists separated by empty divs', () => {
+  it('handles div lists with empty divs preserved', () => {
     const result = parseMarkdown('<div>1. First item</div><div><br></div><div>2. Second item</div>')
-    expect(result).toBe('<ol><li>First item</li><li>Second item</li></ol>')
+    expect(result).toBe('<ol><li>First item</li><li>Second item</li></ol><div><br></div>')
   })
 
   it('applies markdown formatting to div content', () => {
@@ -98,12 +98,12 @@ describe('markdown formatting', () => {
     expect(result).toBe('<div>This <b>bold</b> text in div</div>')
   })
 
-  it('handles complex @voqse case with missing line 3', () => {
+  it('handles complex @voqse case with missing line 3 and preserved empty div', () => {
     const input = '<div>1. ✅ Bold with **text** or __text__ → <b>text</b></div><div>2. ✅ Italic with *text* or _text_ → <i>text</i></div><div><br></div><div>4. ✅ Bold and nested italic **_extremely_ important** → <b><i>extremely</i> important</b></div><div>5. ✅ All bold and italic ***text*** → <b><i>text</i></b></div>'
     const result = parseMarkdown(input)
 
-    // Should create one continuous list with all items in order
-    expect(result).toBe('<ol><li>✅ Bold with <b>text</b> or <b>text</b> → <b>text</b></li><li>✅ Italic with <i>text</i> or <i>text</i> → <i>text</i></li><li>✅ Bold and nested italic <b><i>extremely</i> important</b> → <b><i>extremely</i> important</b></li><li>✅ All bold and italic <b><i>text</i></b> → <b><i>text</i></b></li></ol>')
+    // Should create one continuous list with all items in order, and preserve the empty div
+    expect(result).toBe('<ol><li>✅ Bold with <b>text</b> or <b>text</b> → <b>text</b></li><li>✅ Italic with <i>text</i> or <i>text</i> → <i>text</i></li><li>✅ Bold and nested italic <b><i>extremely</i> important</b> → <b><i>extremely</i> important</b></li><li>✅ All bold and italic <b><i>text</i></b> → <b><i>text</i></b></li></ol><div><br></div>')
   })
 
   it('handles mixed content with divs and text', () => {

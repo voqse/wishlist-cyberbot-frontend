@@ -198,7 +198,8 @@ export function parseMarkdown(text: string): string {
 
     // Add non-list content
     if (token.type === 'empty_div') {
-      // Skip empty divs
+      // Preserve empty divs as intentional empty lines
+      result.push(token.raw)
     }
     else if (token.type === 'div') {
       // Regular div content with markdown formatting applied
