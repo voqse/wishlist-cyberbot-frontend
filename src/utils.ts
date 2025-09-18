@@ -20,10 +20,44 @@ export function formatUsername(user: User) {
   ].filter(Boolean).join(' ') || `@${user.username}`
 }
 
+export function parseMarkdown(text: string): string {
+  let result = text
+
+  // Parse bold-italic first (must be before bold and italic)
+  result = result.replace(/\*\*\*([^*]+)\*\*\*/g, '<strong><em>$1</em></strong>')
+
+  // Parse bold
+  result = result.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+
+  // Parse italic
+  result = result.replace(/\*([^*]+)\*/g, '<em>$1</em>')
+
+  // Parse ordered lists (lines starting with numbers followed by a dot and space)  
+  const orderedListRegex = /^(\d+\.\s.+$\n?)+/gm
+  result = result.replace(orderedListRegex, (match) => {
+    const items = match.trim().replace(/^\d+\.\s(.+)$/gm, '<li>$1</li>')
+    return `<ol>${items}</ol>`
+  })
+
+  // Parse unordered lists (lines starting with - or * followed by space)
+  const unorderedListRegex = /^([-*]\s.+$\n?)+/gm
+  result = result.replace(unorderedListRegex, (match) => {
+    const items = match.trim().replace(/^[-*]\s(.+)$/gm, '<li>$1</li>')
+    return `<ul>${items}</ul>`
+  })
+
+  return result
+}
+
 export function linkify(text: string) {
   const urlRegex = /(\b(https?|ftp|file):\/\/[\w+&@#/%?=~|!:,.;-]*[\w+&@#/%=~|-])|(\bwww\.[\w+&@#/%?=~|!:,.;-]*[\w+&@#/%=~|-])/gi
   return text.replace(urlRegex, (url) => {
     const href = url.startsWith('www.') ? `http://${url}` : url
     return `<a href="${href}" target="_blank" rel="noopener noreferrer">${url}</a>`
   })
+}
+
+export function formatText(text: string): string {
+  // First apply markdown parsing, then linkify
+  return linkify(parseMarkdown(text))
 }
