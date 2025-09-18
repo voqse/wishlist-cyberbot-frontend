@@ -1,6 +1,7 @@
 import type { User } from '@/api/types'
 
-export function clamp(number: number, min: number, max: number) {
+// Simple utility functions - already optimal
+export function clamp(number: number, min: number, max: number): number {
   return Math.min(Math.max(number, min), max)
 }
 
@@ -13,14 +14,11 @@ export function shuffleArray<T>(array: T[]): T[] {
   return newArray
 }
 
-export function formatUsername(user: User) {
-  return [
-    user.firstName,
-    user.lastName,
-  ].filter(Boolean).join(' ') || `@${user.username}`
+export function formatUsername(user: User): string {
+  return [user.firstName, user.lastName].filter(Boolean).join(' ') || `@${user.username}`
 }
 
-// Token types for AST-based parsing
+// Optimized tokenization with single-pass parsing
 interface Token {
   type: 'div' | 'text' | 'empty_div'
   content: string
@@ -33,204 +31,210 @@ interface ListItem {
   content: string
 }
 
+// Precompiled regex patterns for better performance
+const DIV_REGEX = /<div[^>]*>(.*?)<\/div>/gs
+const EMPTY_DIV_REGEX = /^\s*(?:<br\s*\/?>\s*|<\/br>\s*)?$/i
+const ORDER_LIST_REGEX = /^(\d+)\.\s(.+)$/
+const UNORDER_LIST_REGEX = /^[-*]\s(.+)$/
+
 function tokenize(text: string): Token[] {
   const tokens: Token[] = []
-  let remaining = text
+  let lastIndex = 0
+  let match: RegExpExecArray | null
 
-  while (remaining.length > 0) {
-    // Match div elements first
-    const divMatch = remaining.match(/^<div[^>]*>(.*?)<\/div>/s)
-    if (divMatch) {
-      const divContent = divMatch[1]
-      const rawDiv = divMatch[0]
+  // Reset regex lastIndex for global regex
+  DIV_REGEX.lastIndex = 0
 
-      // Check if it's an empty div (contains only <br>, </br>, or whitespace)
-      if (/^\s*(?:<br\s*\/?>\s*|<\/br>\s*)?$/i.test(divContent)) {
-        tokens.push({
-          type: 'empty_div',
-          content: '',
-          raw: rawDiv,
-        })
-      }
-      else {
-        tokens.push({
-          type: 'div',
-          content: divContent,
-          raw: rawDiv,
-        })
-      }
-      remaining = remaining.slice(divMatch[0].length)
-    }
-    else {
-      // Find the next div or take the rest as text
-      const nextDivIndex = remaining.search(/<div[^>]*>/i)
-      if (nextDivIndex > 0) {
-        const textContent = remaining.slice(0, nextDivIndex)
+  // eslint-disable-next-line no-cond-assign
+  while ((match = DIV_REGEX.exec(text)) !== null) {
+    // Add text before this div if any
+    if (match.index > lastIndex) {
+      const textContent = text.slice(lastIndex, match.index)
+      if (textContent.trim()) {
         tokens.push({
           type: 'text',
           content: textContent,
           raw: textContent,
         })
-        remaining = remaining.slice(nextDivIndex)
       }
-      else {
-        // No more divs, rest is text
-        tokens.push({
-          type: 'text',
-          content: remaining,
-          raw: remaining,
-        })
-        remaining = ''
-      }
+    }
+
+    const divContent = match[1]
+    const rawDiv = match[0]
+
+    // Check if it's an empty div using precompiled regex
+    if (EMPTY_DIV_REGEX.test(divContent)) {
+      tokens.push({
+        type: 'empty_div',
+        content: '',
+        raw: rawDiv,
+      })
+    }
+    else {
+      tokens.push({
+        type: 'div',
+        content: divContent,
+        raw: rawDiv,
+      })
+    }
+
+    lastIndex = match.index + match[0].length
+  }
+
+  // Add remaining text if any
+  if (lastIndex < text.length) {
+    const textContent = text.slice(lastIndex)
+    if (textContent.trim()) {
+      tokens.push({
+        type: 'text',
+        content: textContent,
+        raw: textContent,
+      })
     }
   }
 
   return tokens
 }
 
+// Optimized inline markdown with compiled patterns and reduced operations
+const MARKDOWN_PATTERNS = [
+  // Strikethrough (order matters)
+  { regex: /~~([^~]+)~~/g, replacement: '<s>$1</s>' },
+  { regex: /\B~([^~\s][^~]*[^~\s])~\B/g, replacement: '<s>$1</s>' },
+  // Bold-italic
+  { regex: /\*\*\*([^*]+)\*\*\*/g, replacement: '<b><i>$1</i></b>' },
+  // Bold
+  { regex: /\*\*([^*]+)\*\*/g, replacement: '<b>$1</b>' },
+  { regex: /__([^_]+)__/g, replacement: '<b>$1</b>' },
+] as const
+
 function applyInlineMarkdown(text: string): string {
   let result = text
 
-  // Apply markdown formatting with proper closing tag validation
-  // Order is important: strikethrough -> bold-italic -> bold -> italic
+  // Apply patterns in order
+  for (const pattern of MARKDOWN_PATTERNS) {
+    result = result.replace(pattern.regex, pattern.replacement)
+  }
 
-  // Strikethrough (~~text~~ and ~text~)
-  result = result.replace(/~~([^~]+)~~/g, '<s>$1</s>')
-  // Use a compatible regex for single-tilde strikethrough (no lookbehind/lookahead)
-  result = result.replace(/\B~([^~\s][^~]*[^~\s])~\B/g, '<s>$1</s>')
-
-  // Bold-italic (***text***)
-  result = result.replace(/\*\*\*([^*]+)\*\*\*/g, '<b><i>$1</i></b>')
-
-  // Bold (**text** and __text__)
-  result = result.replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
-  result = result.replace(/__([^_]+)__/g, '<b>$1</b>')
-
-  // Italic (*text* and _text_) - avoid matching inside existing tags
+  // Italic patterns require special handling to avoid conflicts with HTML tags
   result = result.split(/(<[^>]+>)/g).map((segment) => {
-    // Only process segments that are not HTML tags
     if (segment.startsWith('<') && segment.endsWith('>')) return segment
 
-    // Apply italic formatting
-    // Replace *text* with <i>text</i>, but not **text** or ***text***
-    let s = segment.replace(/(^|[^*])\*([^*\s][^*]*[^*\s])\*(?!\*)/g, (match, p1, p2) => {
-      return `${p1}<i>${p2}</i>`
-    })
-    // Replace _text_ with <i>text</i>, but not __text__ or ___text___
-    s = s.replace(/(^|[^_])_([^_\s][^_]*[^_\s])_(?!_)/g, (match, p1, p2) => {
-      return `${p1}<i>${p2}</i>`
-    })
-    return s
+    // Apply italic formatting with single replace operation
+    return segment
+      .replace(/(^|[^*])\*([^*\s][^*]*[^*\s])\*(?!\*)/g, '$1<i>$2</i>')
+      .replace(/(^|[^_])_([^_\s][^_]*[^_\s])_(?!_)/g, '$1<i>$2</i>')
   }).join('')
 
   return result
 }
 
-export function parseMarkdown(text: string): string {
-  // Step 1: Tokenize the input
-  const tokens = tokenize(text)
+// Recursive helper function for processing consecutive list items
+function processConsecutiveListItems(tokens: Token[], startIndex: number): {
+  listHtml: string
+  nextIndex: number
+} {
+  const listItems: ListItem[] = []
+  let i = startIndex
+  let isOrderedList: boolean | null = null
 
-  // Step 2: Group consecutive list items only
+  while (i < tokens.length) {
+    const token = tokens[i]
+
+    if (token.type !== 'div' || !token.content.trim()) {
+      break
+    }
+
+    const content = token.content.trim()
+    const orderedMatch = content.match(ORDER_LIST_REGEX)
+    const unorderedMatch = content.match(UNORDER_LIST_REGEX)
+
+    // Determine list type from first item or check consistency
+    if (orderedMatch) {
+      if (isOrderedList === null) {
+        isOrderedList = true
+      }
+      else if (!isOrderedList) {
+        break // Different list type - stop grouping
+      }
+
+      listItems.push({
+        type: 'ordered',
+        number: Number.parseInt(orderedMatch[1], 10),
+        content: orderedMatch[2],
+      })
+    }
+    else if (unorderedMatch) {
+      if (isOrderedList === null) {
+        isOrderedList = false
+      }
+      else if (isOrderedList) {
+        break // Different list type - stop grouping
+      }
+
+      listItems.push({
+        type: 'unordered',
+        content: unorderedMatch[1],
+      })
+    }
+    else {
+      break // Not a list item - stop grouping
+    }
+
+    i++
+  }
+
+  if (listItems.length === 0) {
+    return { listHtml: '', nextIndex: startIndex }
+  }
+
+  // Generate list HTML efficiently
+  if (isOrderedList) {
+    // Sort by number for ordered lists
+    listItems.sort((a, b) => (a.number || 0) - (b.number || 0))
+  }
+
+  const listItemsHtml = listItems
+    .map(item => `<li>${applyInlineMarkdown(item.content)}</li>`)
+    .join('')
+
+  const listHtml = isOrderedList
+    ? `<ol>${listItemsHtml}</ol>`
+    : `<ul>${listItemsHtml}</ul>`
+
+  return { listHtml, nextIndex: i }
+}
+
+export function parseMarkdown(text: string): string {
+  const tokens = tokenize(text)
   const result: string[] = []
   let i = 0
 
   while (i < tokens.length) {
     const token = tokens[i]
 
+    // Check for list items using optimized helper
     if (token.type === 'div' && token.content.trim()) {
       const content = token.content.trim()
-      const orderedMatch = content.match(/^(\d+)\.\s(.+)$/)
-      const unorderedMatch = content.match(/^[-*]\s(.+)$/)
 
-      if (orderedMatch || unorderedMatch) {
-        // Found start of a list - collect consecutive list items of the same type
-        const listItems: ListItem[] = []
-        const isOrderedList = Boolean(orderedMatch)
-
-        // Add the first item
-        if (orderedMatch) {
-          listItems.push({
-            type: 'ordered',
-            number: Number.parseInt(orderedMatch[1], 10),
-            content: orderedMatch[2],
-          })
+      if (ORDER_LIST_REGEX.test(content) || UNORDER_LIST_REGEX.test(content)) {
+        const { listHtml, nextIndex } = processConsecutiveListItems(tokens, i)
+        if (listHtml) {
+          result.push(listHtml)
+          i = nextIndex
+          continue
         }
-        else if (unorderedMatch) {
-          listItems.push({
-            type: 'unordered',
-            content: unorderedMatch[1],
-          })
-        }
-
-        // Look ahead for consecutive list items of the same type
-        let j = i + 1
-        while (j < tokens.length) {
-          const nextToken = tokens[j]
-
-          if (nextToken.type === 'div' && nextToken.content.trim()) {
-            const nextContent = nextToken.content.trim()
-            const nextOrderedMatch = nextContent.match(/^(\d+)\.\s(.+)$/)
-            const nextUnorderedMatch = nextContent.match(/^[-*]\s(.+)$/)
-
-            // Check if it's the same type of list
-            if (isOrderedList && nextOrderedMatch) {
-              listItems.push({
-                type: 'ordered',
-                number: Number.parseInt(nextOrderedMatch[1], 10),
-                content: nextOrderedMatch[2],
-              })
-              j++
-            }
-            else if (!isOrderedList && nextUnorderedMatch) {
-              listItems.push({
-                type: 'unordered',
-                content: nextUnorderedMatch[1],
-              })
-              j++
-            }
-            else {
-              // Different content type - break the consecutive sequence
-              break
-            }
-          }
-          else {
-            // Non-div content or empty div - break the consecutive sequence
-            break
-          }
-        }
-
-        // Generate the list HTML
-        if (isOrderedList) {
-          listItems.sort((a, b) => (a.number || 0) - (b.number || 0))
-          const listHtml = listItems.map(item =>
-            `<li>${applyInlineMarkdown(item.content)}</li>`,
-          ).join('')
-          result.push(`<ol>${listHtml}</ol>`)
-        }
-        else {
-          const listHtml = listItems.map(item =>
-            `<li>${applyInlineMarkdown(item.content)}</li>`,
-          ).join('')
-          result.push(`<ul>${listHtml}</ul>`)
-        }
-
-        // Move to the next unprocessed token
-        i = j
-        continue
       }
     }
 
-    // Not a list item - process normally
+    // Process non-list tokens
     if (token.type === 'empty_div') {
-      // Preserve empty divs as intentional empty lines
       result.push(token.raw)
     }
     else if (token.type === 'div') {
-      // Regular div content with markdown formatting applied
       result.push(`<div>${applyInlineMarkdown(token.content)}</div>`)
     }
     else if (token.type === 'text' && token.content.trim()) {
-      // Text content with markdown formatting applied
       result.push(applyInlineMarkdown(token.content))
     }
 
@@ -240,15 +244,18 @@ export function parseMarkdown(text: string): string {
   return result.join('')
 }
 
-export function linkify(text: string) {
-  const urlRegex = /(\b(https?|ftp|file):\/\/[\w+&@#/%?=~|!:,.;-]*[\w+&@#/%=~|-])|(\bwww\.[\w+&@#/%?=~|!:,.;-]*[\w+&@#/%=~|-])/gi
-  return text.replace(urlRegex, (url) => {
+// Optimized linkify with single regex operation
+
+// Moved to module-level for performance
+const URL_REGEX = /(\b(?:https?|ftp|file):\/\/[\w+&@#/%?=~|!:,.;-]*[\w+&@#/%=~|-])|(\bwww\.[\w+&@#/%?=~|!:,.;-]*[\w+&@#/%=~|-])/gi
+
+export function linkify(text: string): string {
+  return text.replace(URL_REGEX, (url) => {
     const href = url.startsWith('www.') ? `http://${url}` : url
     return `<a href="${href}" target="_blank" rel="noopener noreferrer">${url}</a>`
   })
 }
 
 export function formatText(text: string): string {
-  // First apply markdown parsing, then linkify
   return linkify(parseMarkdown(text))
 }
