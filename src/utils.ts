@@ -113,13 +113,13 @@ function applyInlineMarkdown(text: string): string {
 
     // Apply italic formatting
     // Replace *text* with <i>text</i>, but not **text** or ***text***
-    let s = segment.replace(/(^|[^*])\*([^*\s][^*]*[^*\s])\*(?!\*)/g, function(match, p1, p2) {
-      return p1 + '<i>' + p2 + '</i>';
-    });
+    let s = segment.replace(/(^|[^*])\*([^*\s][^*]*[^*\s])\*(?!\*)/g, (match, p1, p2) => {
+      return `${p1}<i>${p2}</i>`
+    })
     // Replace _text_ with <i>text</i>, but not __text__ or ___text___
-    s = s.replace(/(^|[^_])_([^_\s][^_]*[^_\s])_(?!_)/g, function(match, p1, p2) {
-      return p1 + '<i>' + p2 + '</i>';
-    });
+    s = s.replace(/(^|[^_])_([^_\s][^_]*[^_\s])_(?!_)/g, (match, p1, p2) => {
+      return `${p1}<i>${p2}</i>`
+    })
     return s
   }).join('')
 
