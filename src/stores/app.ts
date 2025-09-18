@@ -32,11 +32,10 @@ export const useAppStore = defineStore('app', () => {
   }
 
   const saveItemsImmediate = async () => {
-    await saveItemsRequest(wishlist.value.items)
-    wishlist.value = await getWishlist()
+    wishlist.value = await saveItemsRequest(wishlist.value.items)
   }
 
-  const saveItems = useDebounceFn(saveItemsImmediate, 1000)
+  const saveItems = useDebounceFn(saveItemsImmediate, 5000)
 
   function createItem() {
     wishlist.value.items.push({

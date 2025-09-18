@@ -25,7 +25,7 @@ export function getWishlist(shareId?: Wishlist['shareId']): Promise<Wishlist> {
   return request<Wishlist>(path, 'GET')
 }
 
-export function saveItems(items: Partial<Item>[]) {
+export function saveItems(items: Partial<Item>[]): Promise<Wishlist> {
   return request('/wishlist/items', 'POST', { items })
 }
 
