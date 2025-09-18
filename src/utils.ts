@@ -32,7 +32,7 @@ export function parseMarkdown(text: string): string {
   // Parse italic
   result = result.replace(/\*([^*]+)\*/g, '<i>$1</i>')
 
-  // Parse ordered lists (lines starting with numbers followed by a dot and space)  
+  // Parse ordered lists (lines starting with numbers followed by a dot and space)
   const orderedListRegex = /^(\d+\.\s.+$\n?)+/gm
   result = result.replace(orderedListRegex, (match) => {
     const items = match.trim().replace(/^\d+\.\s(.+)$/gm, '<li>$1</li>')
