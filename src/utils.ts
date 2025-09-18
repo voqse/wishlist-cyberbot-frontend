@@ -35,8 +35,15 @@ export function parseMarkdown(text: string): string {
   result = result.replace(/__([^_]+)__/g, '<b>$1</b>')
 
   // Parse italic (both * and _), but handle nested italic in bold
-  result = result.replace(/\*([^*]+)\*/g, '<i>$1</i>')
-  result = result.replace(/_([^_]+)_/g, '<i>$1</i>')
+  // To avoid matching inside HTML tags, split by tags and only process text nodes
+  result = result.split(/(<[^>]+>)/g).map((segment, idx) => {
+    // Only process segments that are not HTML tags
+    if (segment.startsWith('<') && segment.endsWith('>')) return segment;
+    // Replace *italic* and _italic_ only outside tags
+    let s = segment.replace(/\*([^*]+)\*/g, '<i>$1</i>');
+    s = s.replace(/_([^_]+)_/g, '<i>$1</i>');
+    return s;
+  }).join('');
 
   // Parse ordered lists (lines starting with numbers followed by a dot and space)
   const orderedListRegex = /^(\d+\.\s.+$\n?)+/gm
