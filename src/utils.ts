@@ -92,60 +92,6 @@ export function parseMarkdown(text: string): string {
     return s
   }).join('')
 
-  // Parse ordered lists (lines starting with numbers followed by a dot and space)
-  {
-    const lines = result.split('\n')
-    let inList = false
-    const newLines: string[] = []
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i]
-      if (/^\d+\./.test(line)) {
-        if (!inList) {
-          inList = true
-          newLines.push('<ol>')
-        }
-        newLines.push(line.replace(/^\d+\.\s(.+)$/, '<li>$1</li>'))
-        // If next line is not a list item, close the list
-        if (i + 1 >= lines.length || !/^\d+\./.test(lines[i + 1])) {
-          newLines.push('</ol>')
-          inList = false
-        }
-      }
-      else {
-        newLines.push(line)
-      }
-    }
-    result = newLines.join('\n')
-  }
-
-  // Parse unordered lists (lines starting with - or * followed by space)
-  // Group consecutive unordered list items into a single <ul>
-  const unorderedListResult = result.split('\n').reduce<{ lines: string[], inList: boolean }>((acc, line) => {
-    const unorderedListItem = /^[-*]\s(.+)$/.exec(line)
-    if (unorderedListItem) {
-      if (!acc.inList) {
-        acc.lines.push('<ul>')
-        acc.inList = true
-      }
-      acc.lines.push(`<li>${unorderedListItem[1]}</li>`)
-    }
-    else {
-      if (acc.inList) {
-        acc.lines.push('</ul>')
-        acc.inList = false
-      }
-      acc.lines.push(line)
-    }
-    return acc
-  }, { lines: [], inList: false })
-
-  // Close list if we ended with a list item
-  if (unorderedListResult.inList) {
-    unorderedListResult.lines.push('</ul>')
-  }
-
-  result = unorderedListResult.lines.join('\n')
-
   return result
 }
 

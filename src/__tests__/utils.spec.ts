@@ -47,21 +47,7 @@ describe('markdown formatting', () => {
     expect(result).toBe('Mix of <b>bold</b>, <i>italic</i>, <s>strikethrough</s> and <b><i>all</i></b>')
   })
 
-  it('parses ordered lists correctly', () => {
-    const result = parseMarkdown(`1. First item
-2. Second item
-3. Third item`)
-    expect(result).toBe('<ol>\n<li>First item</li>\n<li>Second item</li>\n<li>Third item</li>\n</ol>')
-  })
-
-  it('parses unordered lists correctly', () => {
-    const result = parseMarkdown(`- First item
-- Second item
-* Third item`)
-    expect(result).toBe('<ul>\n<li>First item</li>\n<li>Second item</li>\n<li>Third item</li>\n</ul>')
-  })
-
-  // New tests for div-based lists (contenteditable compatibility)
+  // Tests for div-based lists (contenteditable compatibility)
   it('parses div-based ordered lists correctly', () => {
     const result = parseMarkdown('<div>1. First item</div><div>2. Second item</div><div>3. Third item</div>')
     expect(result).toBe('<ol><li>First item</li><li>Second item</li><li>Third item</li></ol>')
