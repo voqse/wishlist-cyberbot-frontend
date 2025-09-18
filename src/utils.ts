@@ -46,11 +46,29 @@ export function parseMarkdown(text: string): string {
   }).join('');
 
   // Parse ordered lists (lines starting with numbers followed by a dot and space)
-  const orderedListRegex = /^(\d+\.\s.+$\n?)+/gm
-  result = result.replace(orderedListRegex, (match) => {
-    const items = match.trim().replace(/^\d+\.\s(.+)$/gm, '<li>$1</li>')
-    return `<ol>${items}</ol>`
-  })
+  {
+    const lines = result.split('\n');
+    let inList = false;
+    let newLines: string[] = [];
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      if (/^\d+\.\s+/.test(line)) {
+        if (!inList) {
+          inList = true;
+          newLines.push('<ol>');
+        }
+        newLines.push(line.replace(/^\d+\.\s+(.+)$/, '<li>$1</li>'));
+        // If next line is not a list item, close the list
+        if (i + 1 >= lines.length || !/^\d+\.\s+/.test(lines[i + 1])) {
+          newLines.push('</ol>');
+          inList = false;
+        }
+      } else {
+        newLines.push(line);
+      }
+    }
+    result = newLines.join('\n');
+  }
 
   // Parse unordered lists (lines starting with - or * followed by space)
   const unorderedListRegex = /^([-*]\s.+$\n?)+/gm
