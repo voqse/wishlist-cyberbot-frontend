@@ -29,6 +29,10 @@ export function parseMarkdown(text: string): string {
   result = result.replace(/&gt;/g, '>')
   result = result.replace(/&amp;/g, '&')
 
+  // Clean up empty divs and normalize whitespace
+  result = result.replace(/<div>\s*<\/div>/g, '')
+  result = result.replace(/<div>\s*<\/div>/g, '')
+
   // Parse div-based lists first (for contenteditable compatibility)
   // Handle consecutive div elements that contain list patterns
 
@@ -76,35 +80,44 @@ export function parseMarkdown(text: string): string {
     return match
   })
 
-  // Parse text-based ordered lists (lines starting with numbers followed by a dot and space)
-  {
-    const lines = result.split('\n')
-    let inList = false
-    const newLines: string[] = []
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i].trim()
-      if (/^\d+\./.test(line)) {
-        if (!inList) {
-          inList = true
-          newLines.push('<ol>')
-        }
-        newLines.push(line.replace(/^\d+\.\s(.+)$/, '<li>$1</li>'))
-        // If next line is not a list item, close the list
-        const nextLine = i + 1 < lines.length ? lines[i + 1].trim() : ''
-        if (!nextLine || !/^\d+\./.test(nextLine)) {
-          newLines.push('</ol>')
-          inList = false
-        }
-      }
-      else {
-        if (inList) {
-          newLines.push('</ol>')
-          inList = false
-        }
-        newLines.push(line)
-      }
+  // Enhanced text-based ordered list parsing - handle complex content better
+  // Simple approach: find all numbered list items and create one list
+  const orderedListItems: Array<{ number: number, content: string }> = []
+  const lines = result.split('\n')
+
+  for (const line of lines) {
+    const trimmedLine = line.trim()
+    const match = trimmedLine.match(/^(\d+)\.\s(.+)$/)
+    if (match) {
+      const number = Number.parseInt(match[1], 10)
+      const content = match[2]
+      orderedListItems.push({ number, content })
     }
-    result = newLines.join('\n')
+  }
+
+  if (orderedListItems.length > 0) {
+    // Sort by number to ensure proper order
+    orderedListItems.sort((a, b) => a.number - b.number)
+
+    // Create the complete ordered list
+    const listItemsHtml = orderedListItems.map(item => `<li>${item.content}</li>`).join('')
+    const completeList = `<ol>${listItemsHtml}</ol>`
+
+    // Remove all individual list items and replace with the complete list
+    let hasReplaced = false
+    const newLines = lines.map((line) => {
+      const trimmedLine = line.trim()
+      if (/^\d+\.\s/.test(trimmedLine)) {
+        if (!hasReplaced) {
+          hasReplaced = true
+          return completeList
+        }
+        return '' // Remove subsequent list items
+      }
+      return line
+    })
+
+    result = newLines.filter(line => line !== '').join('\n')
   }
 
   // Parse text-based unordered lists (lines starting with - or * followed by space)

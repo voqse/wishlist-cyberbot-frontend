@@ -52,7 +52,7 @@ describe('markdown formatting', () => {
     const result = parseMarkdown(`1. First item
 2. Second item
 3. Third item`)
-    expect(result).toBe('<ol>\n<li>First item</li>\n<li>Second item</li>\n<li>Third item</li>\n</ol>')
+    expect(result).toBe('<ol><li>First item</li><li>Second item</li><li>Third item</li></ol>')
   })
 
   it('parses text-based unordered lists correctly', () => {
@@ -60,6 +60,24 @@ describe('markdown formatting', () => {
 - Second item
 * Third item`)
     expect(result).toBe('<ul>\n<li>First item</li>\n<li>Second item</li>\n<li>Third item</li>\n</ul>')
+  })
+
+  it('handles complex mixed content with missing line numbers correctly', () => {
+    // @voqse's exact problematic case - missing line 3, mixed HTML entities and BR tags
+    const input = `1. ✅ Bold with **text** or __text__ → &lt;b&gt;text&lt;/b&gt;<br>2. ✅ Italic with *text* or _text_ → &lt;i&gt;text&lt;/i&gt;<br><div><br></div>4. ✅ Bold and nested italic **_extremely_ important** → &lt;b&gt;&lt;i&gt;extremely&lt;/i&gt; important&lt;/b&gt;<br>5. ✅ All bold and italic ***text*** → &lt;b&gt;&lt;i&gt;text&lt;/i&gt;&lt;/b&gt;`
+    const result = parseMarkdown(input)
+
+    // Should create one continuous list with all found items (1, 2, 4, 5) in order
+    expect(result).toContain('<ol>')
+    expect(result).toContain('<li>✅ Bold with <b>text</b> or <b>text</b> → <b>text</b></li>')
+    expect(result).toContain('<li>✅ Italic with <i>text</i> or <i>text</i> → <i>text</i></li>')
+    expect(result).toContain('<li>✅ Bold and nested italic <b><i>extremely</i> important</b> → <b><i>extremely</i> important</b></li>')
+    expect(result).toContain('<li>✅ All bold and italic <b><i>text</i></b> → <b><i>text</i></b></li>')
+    expect(result).toContain('</ol>')
+
+    // Should NOT contain multiple separate <ol> elements
+    const olCount = (result.match(/<ol>/g) || []).length
+    expect(olCount).toBe(1)
   })
 
   // Tests for div-based lists (contenteditable compatibility)
