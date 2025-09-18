@@ -20,160 +20,197 @@ export function formatUsername(user: User) {
   ].filter(Boolean).join(' ') || `@${user.username}`
 }
 
-export function parseMarkdown(text: string): string {
-  let result = text
+// Token types for AST-based parsing
+interface Token {
+  type: 'div' | 'text' | 'empty_div'
+  content: string
+  raw: string
+}
 
-  // Handle HTML entities and normalize <br> tags to newlines first
-  result = result.replace(/<br\s*\/?>/gi, '\n')
-  result = result.replace(/&lt;/g, '<')
-  result = result.replace(/&gt;/g, '>')
-  result = result.replace(/&amp;/g, '&')
+interface ListItem {
+  type: 'ordered' | 'unordered'
+  number?: number
+  content: string
+}
 
-  // Clean up empty divs and normalize whitespace
-  result = result.replace(/<div>\s*<\/div>/g, '')
-  result = result.replace(/<div>\s*<\/div>/g, '')
+function tokenize(text: string): Token[] {
+  const tokens: Token[] = []
+  let remaining = text
 
-  // Parse div-based lists first (for contenteditable compatibility)
-  // Handle consecutive div elements that contain list patterns
+  while (remaining.length > 0) {
+    // Match div elements first
+    const divMatch = remaining.match(/^<div[^>]*>(.*?)<\/div>/s)
+    if (divMatch) {
+      const divContent = divMatch[1]
+      const rawDiv = divMatch[0]
 
-  // Parse div-based ordered lists: <div>1. item</div><div>2. item</div> -> <ol><li>item</li><li>item</li></ol>
-  result = result.replace(/(?:<div[^>]*>(\d+\.[^<]+)<\/div>\s*)+/g, (match) => {
-    // Extract all div contents that match ordered list pattern
-    const divMatches = match.match(/<div[^>]*>(\d+\.[^<]+)<\/div>/g)
-    if (!divMatches) return match
-
-    let hasOrderedItems = false
-    const listItems = divMatches.map((divMatch) => {
-      const content = divMatch.match(/<div[^>]*>(\d+\.([^<]+))<\/div>/)
-      if (content && content[2]) {
-        hasOrderedItems = true
-        return `<li>${content[2].trim()}</li>`
-      }
-      return null
-    }).filter(Boolean)
-
-    if (hasOrderedItems && listItems.length > 0) {
-      return `<ol>${listItems.join('')}</ol>`
-    }
-    return match
-  })
-
-  // Parse div-based unordered lists: <div>- item</div><div>* item</div> -> <ul><li>item</li><li>item</li></ul>
-  result = result.replace(/(?:<div[^>]*>[-*][^<]+<\/div>\s*)+/g, (match) => {
-    // Extract all div contents that match unordered list pattern
-    const divMatches = match.match(/<div[^>]*>[-*][^<]+<\/div>/g)
-    if (!divMatches) return match
-
-    let hasUnorderedItems = false
-    const listItems = divMatches.map((divMatch) => {
-      const content = divMatch.match(/<div[^>]*>[-*]([^<]+)<\/div>/)
-      if (content && content[1]) {
-        hasUnorderedItems = true
-        return `<li>${content[1].trim()}</li>`
-      }
-      return null
-    }).filter(Boolean)
-
-    if (hasUnorderedItems && listItems.length > 0) {
-      return `<ul>${listItems.join('')}</ul>`
-    }
-    return match
-  })
-
-  // Enhanced text-based ordered list parsing - handle complex content better
-  // Simple approach: find all numbered list items and create one list
-  const orderedListItems: Array<{ number: number, content: string }> = []
-  const lines = result.split('\n')
-
-  for (const line of lines) {
-    const trimmedLine = line.trim()
-    const match = trimmedLine.match(/^(\d+)\.\s(.+)$/)
-    if (match) {
-      const number = Number.parseInt(match[1], 10)
-      const content = match[2]
-      orderedListItems.push({ number, content })
-    }
-  }
-
-  if (orderedListItems.length > 0) {
-    // Sort by number to ensure proper order
-    orderedListItems.sort((a, b) => a.number - b.number)
-
-    // Create the complete ordered list
-    const listItemsHtml = orderedListItems.map(item => `<li>${item.content}</li>`).join('')
-    const completeList = `<ol>${listItemsHtml}</ol>`
-
-    // Remove all individual list items and replace with the complete list
-    let hasReplaced = false
-    const newLines = lines.map((line) => {
-      const trimmedLine = line.trim()
-      if (/^\d+\.\s/.test(trimmedLine)) {
-        if (!hasReplaced) {
-          hasReplaced = true
-          return completeList
-        }
-        return '' // Remove subsequent list items
-      }
-      return line
-    })
-
-    result = newLines.filter(line => line !== '').join('\n')
-  }
-
-  // Parse text-based unordered lists (lines starting with - or * followed by space)
-  {
-    const lines = result.split('\n')
-    let inList = false
-    const newLines: string[] = []
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i].trim()
-      if (/^[-*]\s/.test(line)) {
-        if (!inList) {
-          inList = true
-          newLines.push('<ul>')
-        }
-        newLines.push(line.replace(/^[-*]\s(.+)$/, '<li>$1</li>'))
-        // If next line is not a list item, close the list
-        const nextLine = i + 1 < lines.length ? lines[i + 1].trim() : ''
-        if (!nextLine || !/^[-*]\s/.test(nextLine)) {
-          newLines.push('</ul>')
-          inList = false
-        }
+      // Check if it's an empty div (contains only <br>, </br>, or whitespace)
+      if (/^\s*(?:<br\s*\/?>\s*|<\/br>\s*)?$/i.test(divContent)) {
+        tokens.push({
+          type: 'empty_div',
+          content: '',
+          raw: rawDiv,
+        })
       }
       else {
-        if (inList) {
-          newLines.push('</ul>')
-          inList = false
-        }
-        newLines.push(line)
+        tokens.push({
+          type: 'div',
+          content: divContent,
+          raw: rawDiv,
+        })
+      }
+      remaining = remaining.slice(divMatch[0].length)
+    }
+    else {
+      // Find the next div or take the rest as text
+      const nextDivIndex = remaining.search(/<div[^>]*>/i)
+      if (nextDivIndex > 0) {
+        const textContent = remaining.slice(0, nextDivIndex)
+        tokens.push({
+          type: 'text',
+          content: textContent,
+          raw: textContent,
+        })
+        remaining = remaining.slice(nextDivIndex)
+      }
+      else {
+        // No more divs, rest is text
+        tokens.push({
+          type: 'text',
+          content: remaining,
+          raw: remaining,
+        })
+        remaining = ''
       }
     }
-    result = newLines.join('\n')
   }
 
-  // Parse strikethrough first (fix regex to prevent empty matches)
-  result = result.replace(/~~([^~]+)~~/g, '<s>$1</s>')
-  result = result.replace(/~([^~]+)~/g, '<s>$1</s>')
+  return tokens
+}
 
-  // Parse bold-italic first (must be before bold and italic)
+function applyInlineMarkdown(text: string): string {
+  let result = text
+
+  // Apply markdown formatting with proper closing tag validation
+  // Order is important: strikethrough -> bold-italic -> bold -> italic
+
+  // Strikethrough (~~text~~ and ~text~)
+  result = result.replace(/~~([^~]+)~~/g, '<s>$1</s>')
+  result = result.replace(/(?<!~)~([^~\s][^~]*[^~\s])~(?!~)/g, '<s>$1</s>')
+
+  // Bold-italic (***text***)
   result = result.replace(/\*\*\*([^*]+)\*\*\*/g, '<b><i>$1</i></b>')
 
-  // Parse bold (both ** and __)
+  // Bold (**text** and __text__)
   result = result.replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
   result = result.replace(/__([^_]+)__/g, '<b>$1</b>')
 
-  // Parse italic (both * and _), but handle nested italic in bold
-  // To avoid matching inside HTML tags, split by tags and only process text nodes
+  // Italic (*text* and _text_) - avoid matching inside existing tags
   result = result.split(/(<[^>]+>)/g).map((segment) => {
     // Only process segments that are not HTML tags
     if (segment.startsWith('<') && segment.endsWith('>')) return segment
-    // Replace *italic* and _italic_ only outside tags (fix regex to prevent empty matches)
-    let s = segment.replace(/\*([^*]+)\*/g, '<i>$1</i>')
-    s = s.replace(/_([^_]+)_/g, '<i>$1</i>')
+
+    // Apply italic formatting
+    let s = segment.replace(/(?<!\*)\*([^*\s][^*]*[^*\s])\*(?!\*)/g, '<i>$1</i>')
+    s = s.replace(/(?<!_)_([^_\s][^_]*[^_\s])_(?!_)/g, '<i>$1</i>')
     return s
   }).join('')
 
   return result
+}
+
+export function parseMarkdown(text: string): string {
+  // Step 1: Tokenize the input
+  const tokens = tokenize(text)
+
+  // Step 2: We don't need to parse list items separately since we handle them inline
+
+  // Step 3: Group ALL list items by type (ignore intervening content for list grouping)
+  const result: string[] = []
+  const processedTokens = new Set<number>()
+
+  // First, collect all consecutive ordered lists
+  const orderedItems: ListItem[] = []
+  const unorderedItems: ListItem[] = []
+
+  for (let i = 0; i < tokens.length; i++) {
+    if (processedTokens.has(i)) continue
+
+    const token = tokens[i]
+
+    // Check if this token is a list item
+    if (token.type === 'div' && token.content.trim()) {
+      const content = token.content.trim()
+      const orderedMatch = content.match(/^(\d+)\.\s(.+)$/)
+      const unorderedMatch = content.match(/^[-*]\s(.+)$/)
+
+      if (orderedMatch) {
+        orderedItems.push({
+          type: 'ordered',
+          number: Number.parseInt(orderedMatch[1], 10),
+          content: orderedMatch[2],
+        })
+        processedTokens.add(i)
+      }
+      else if (unorderedMatch) {
+        unorderedItems.push({
+          type: 'unordered',
+          content: unorderedMatch[1],
+        })
+        processedTokens.add(i)
+      }
+    }
+  }
+
+  // Now process tokens in order, but consolidate lists
+  let hasAddedOrderedList = false
+  let hasAddedUnorderedList = false
+
+  for (let i = 0; i < tokens.length; i++) {
+    const token = tokens[i]
+
+    if (processedTokens.has(i)) {
+      // This is a list item - add the consolidated list if we haven't already
+      const content = token.content.trim()
+      const orderedMatch = content.match(/^(\d+)\.\s(.+)$/)
+      const unorderedMatch = content.match(/^[-*]\s(.+)$/)
+
+      if (orderedMatch && !hasAddedOrderedList) {
+        // Add all ordered items as one consolidated list
+        orderedItems.sort((a, b) => (a.number || 0) - (b.number || 0))
+        const listHtml = orderedItems.map(item =>
+          `<li>${applyInlineMarkdown(item.content)}</li>`,
+        ).join('')
+        result.push(`<ol>${listHtml}</ol>`)
+        hasAddedOrderedList = true
+      }
+      else if (unorderedMatch && !hasAddedUnorderedList) {
+        // Add all unordered items as one consolidated list
+        const listHtml = unorderedItems.map(item =>
+          `<li>${applyInlineMarkdown(item.content)}</li>`,
+        ).join('')
+        result.push(`<ul>${listHtml}</ul>`)
+        hasAddedUnorderedList = true
+      }
+      // Skip adding individual list items since we've added the consolidated list
+      continue
+    }
+
+    // Add non-list content
+    if (token.type === 'empty_div') {
+      // Skip empty divs
+    }
+    else if (token.type === 'div') {
+      // Regular div content with markdown formatting applied
+      result.push(`<div>${applyInlineMarkdown(token.content)}</div>`)
+    }
+    else if (token.type === 'text' && token.content.trim()) {
+      // Text content with markdown formatting applied
+      result.push(applyInlineMarkdown(token.content))
+    }
+  }
+
+  return result.join('')
 }
 
 export function linkify(text: string) {
