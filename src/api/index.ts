@@ -38,5 +38,5 @@ export function itemReserveCancel(itemId: Item['id']) {
 }
 
 export function subscribeToWishlistUpdates(shareId: Wishlist['shareId']) {
-  return createWebSocket<Wishlist>(`${__API_WS_BASE__}/wishlist/ws/${shareId}`)
+  return createWebSocket<Wishlist>(`${__API_WS_BASE__}/wishlist/ws/${shareId}`, ['bearer', token])
 }
