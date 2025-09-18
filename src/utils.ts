@@ -24,13 +24,13 @@ export function parseMarkdown(text: string): string {
   let result = text
 
   // Parse bold-italic first (must be before bold and italic)
-  result = result.replace(/\*\*\*([^*]+)\*\*\*/g, '<strong><em>$1</em></strong>')
+  result = result.replace(/\*\*\*([^*]+)\*\*\*/g, '<b><i>$1</i></b>')
 
   // Parse bold
-  result = result.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+  result = result.replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
 
   // Parse italic
-  result = result.replace(/\*([^*]+)\*/g, '<em>$1</em>')
+  result = result.replace(/\*([^*]+)\*/g, '<i>$1</i>')
 
   // Parse ordered lists (lines starting with numbers followed by a dot and space)  
   const orderedListRegex = /^(\d+\.\s.+$\n?)+/gm

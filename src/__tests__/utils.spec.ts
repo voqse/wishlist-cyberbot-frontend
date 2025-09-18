@@ -4,17 +4,17 @@ import { formatText, parseMarkdown } from '../utils'
 describe('markdown formatting', () => {
   it('parses italic text correctly', () => {
     const result = parseMarkdown('This is *italic* text')
-    expect(result).toBe('This is <em>italic</em> text')
+    expect(result).toBe('This is <i>italic</i> text')
   })
 
   it('parses bold text correctly', () => {
     const result = parseMarkdown('This is **bold** text')
-    expect(result).toBe('This is <strong>bold</strong> text')
+    expect(result).toBe('This is <b>bold</b> text')
   })
 
   it('parses bold-italic text correctly', () => {
     const result = parseMarkdown('This is ***bold-italic*** text')
-    expect(result).toBe('This is <strong><em>bold-italic</em></strong> text')
+    expect(result).toBe('This is <b><i>bold-italic</i></b> text')
   })
 
   it('parses ordered lists correctly', () => {
@@ -33,7 +33,7 @@ describe('markdown formatting', () => {
 
   it('formatText combines markdown and linkify correctly', () => {
     const result = formatText('Check **this** out: https://example.com')
-    expect(result).toContain('<strong>this</strong>')
+    expect(result).toContain('<b>this</b>')
     expect(result).toContain('<a href="https://example.com"')
   })
 })
