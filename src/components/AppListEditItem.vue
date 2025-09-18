@@ -10,6 +10,7 @@ import AppTextarea from '@/components/AppTextarea.vue'
 const props = defineProps<{
   modelValue: Item['text']
   placeholder: string
+  draggable?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -88,6 +89,7 @@ defineExpose({
 <template>
   <li
     ref="itemRef"
+    :draggable="draggable"
     :class="[
       style.appListItem,
       active && style.appListEditItemActive,
