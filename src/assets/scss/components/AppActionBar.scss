@@ -8,7 +8,7 @@
   .appActionBarBlur {
     position: absolute;
     inset: auto 0 0 0;
-    height: 4.625rem;
+    height: 6rem;
     pointer-events: none;
   }
 
@@ -17,9 +17,9 @@
     position: absolute;
     inset: 0;
     backdrop-filter:
-      blur(0.5rem)
-      brightness(1.3)
-      saturate(1.5);
+      blur(0.75rem);
+      //brightness(1.3)
+      //saturate(1.5);
     mask-image:
       linear-gradient(to bottom, transparent 0%, #000 50%, #000 100%);
   }
@@ -27,42 +27,32 @@
   .appActionBarContent {
     position: relative;
     z-index: 1000;
-    padding:
-      0
-      var(--tg-content-safe-area-inset-right, 1rem)
-      var(--tg-content-safe-area-inset-bottom, 1.25rem)
-      var(--tg-content-safe-area-inset-left, 1rem);
+    padding: 0 0.5rem 1.5rem 0.5rem;
   }
 
   .appActionBarButton {
     display: block;
     width: 100%;
-    padding: 0.75rem 0.75rem;
-    padding-inline-start: 4rem;
-    color: var(--tg-theme-accent-text-color, #0095f6);
-    font-weight: 500;
-  }
-
-  .appActionBarButton {
-    width: 100%;
     padding: 0.75rem 1rem;
     backdrop-filter:
-      blur(0.25rem)
-      brightness(1.3)
-      saturate(1.5);
-    background: color-mix(in srgb, var(--tg-theme-bg-color, #fff) 48%, transparent);
+      blur(0.75rem);
+    //brightness(1.3)
+    //saturate(1.5);
     border-radius: 1000rem;
     overflow: hidden;
     box-shadow:
       0 (0.0625rem * 2) (0.0625rem * 2) 0 rgba(0, 0, 0, 0.08),
       0 (-0.0625rem / 2) (0.0625rem * 2) 0 rgba(0, 0, 0, 0.08),
-      0 0.0625rem 0 0 rgba(255, 255, 255, 0.32) inset,
+      0 0.0625rem 0 0 rgba(255, 255, 255, 0.16) inset,
       0 (-0.0625rem / 2) 0 0 rgba(255, 255, 255, 0.16) inset;
+    background: rgba(255, 255, 255, 0.04);
+    color: color-mix(in srgb, var(--tg-theme-text-color, #000) 66.666666%, transparent);
     text-align: center;
-    font-size: 1rem;
+    font-weight: 500;
+    font-size: 0.875rem;
 
-    //&:hover {
-    //  background: rgba(96, 96, 96, 0.48);
-    //}
+    &:hover {
+      background: rgba(255, 255, 255, 0.16);
+    }
   }
 }
