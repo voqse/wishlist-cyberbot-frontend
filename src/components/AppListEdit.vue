@@ -39,7 +39,12 @@ async function handleRemove(id: Item['id'], idx: number) {
       @remove="handleRemove(item.id, index)"
     />
   </ul>
-  <button :class="style.appListAction" @click="appStore.createItem">
-    {{ t('wishlist.newItem') }}
-  </button>
+  <div :class="style.appActionBar">
+    <div :class="style.appActionBarBlur" />
+    <div :class="style.appActionBarContent">
+      <button :class="style.appActionBarButton" @click="appStore.createItem">
+        {{ t('wishlist.newItem') }}
+      </button>
+    </div>
+  </div>
 </template>

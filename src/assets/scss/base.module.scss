@@ -9,6 +9,7 @@
 @use "components/AppHeader";
 @use "components/AppCheckbox";
 @use "components/AppTextarea";
+@use "components/AppActionBar";
 
 @include reset.style();
 @include typography.style();
@@ -20,6 +21,7 @@
 @include AppHeader.style();
 @include AppCheckbox.style();
 @include AppTextarea.style();
+@include AppActionBar.style();
 
 // App styles
 body {
@@ -49,6 +51,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  padding-bottom: 5rem;
 }
 
 .appPanel {
