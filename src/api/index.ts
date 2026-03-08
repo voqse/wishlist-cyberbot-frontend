@@ -29,12 +29,12 @@ export function saveItems(items: Partial<Item>[]): Promise<Wishlist> {
   return request('/wishlist/items', 'POST', { items })
 }
 
-export function itemReserve(itemId: Item['id']) {
-  return request(`/wishlist/items/reserve/${itemId}`, 'POST', {})
+export function itemReserve(itemId: Item['id']): Promise<Wishlist> {
+  return request<Wishlist>(`/wishlist/items/reserve/${itemId}`, 'POST', {})
 }
 
-export function itemReserveCancel(itemId: Item['id']) {
-  return request(`/wishlist/items/reserve/cancel/${itemId}`, 'POST', {})
+export function itemReserveCancel(itemId: Item['id']): Promise<Wishlist> {
+  return request<Wishlist>(`/wishlist/items/reserve/cancel/${itemId}`, 'POST', {})
 }
 
 export function subscribeToWishlistUpdates(shareId: Wishlist['shareId']) {

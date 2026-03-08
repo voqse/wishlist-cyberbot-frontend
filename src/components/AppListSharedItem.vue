@@ -1,16 +1,18 @@
 <script setup lang="ts">
 import type { Item } from '@/api/types'
 import { computed } from 'vue'
-import { itemReserve, itemReserveCancel } from '@/api'
 import style from '@/assets/scss/base.module.scss'
 import AppCheckbox from '@/components/AppCheckbox.vue'
 import AppUserPhoto from '@/components/AppUserPhoto.vue'
+import { useAppStore } from '@/stores/app'
 import { formatText, formatUsername } from '@/utils'
 
 const props = defineProps<{
   item: Item
   disabled?: boolean
 }>()
+
+const appStore = useAppStore()
 
 const isReserved = computed(() => Boolean(props.item.reservedBy))
 </script>
@@ -21,7 +23,7 @@ const isReserved = computed(() => Boolean(props.item.reservedBy))
       :class="style.appListItemCheckboxFullWidth"
       :model-value="isReserved"
       :disabled
-      @update:model-value="$event ? itemReserve(item.id) : itemReserveCancel(item.id)"
+      @update:model-value="$event ? appStore.reserveItem(item.id) : appStore.cancelReserveItem(item.id)"
     >
       <template #photo>
         <AppUserPhoto

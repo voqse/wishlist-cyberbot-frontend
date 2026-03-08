@@ -4,6 +4,8 @@ import { defineStore } from 'pinia'
 import { computed, onScopeDispose, ref, watch } from 'vue'
 import {
   getWishlist,
+  itemReserve,
+  itemReserveCancel,
   saveItems,
   subscribeToWishlistUpdates,
 } from '@/api'
@@ -31,12 +33,26 @@ export const useAppStore = defineStore('app', () => {
     onScopeDispose(() => ws.close(), true)
   }
 
+  let tempIdCounter = -1
+
   const saveItemsDebounced = useDebounceFn(async () => {
-    wishlist.value = await saveItems(wishlist.value.items)
+    const serverWishlist = await saveItems(wishlist.value.items)
+    // Merge server response: update ids and server-side fields while preserving local array reference
+    serverWishlist.items.forEach((serverItem, idx) => {
+      const localItem = wishlist.value.items[idx]
+      if (localItem) {
+        Object.assign(localItem, serverItem)
+      }
+    })
+    // Sync wishlist-level fields (id, shareId, etc.) without replacing items array
+    const { items: _, ...wishlistMeta } = serverWishlist
+    Object.assign(wishlist.value, wishlistMeta)
   }, 5000)
 
   function createItem() {
+    // Optimistic update: add item immediately with a temporary negative id
     wishlist.value.items.push({
+      id: tempIdCounter--,
       text: '',
     } as Item)
     return saveItemsDebounced()
@@ -44,6 +60,7 @@ export const useAppStore = defineStore('app', () => {
 
   function removeItem(id: Item['id']) {
     const idx = wishlist.value.items.findIndex(item => item?.id === id)
+    // Optimistic update: remove item immediately
     wishlist.value.items.splice(idx, 1)
     return saveItemsDebounced()
   }
@@ -53,6 +70,44 @@ export const useAppStore = defineStore('app', () => {
     void createItem()
   })
 
+  async function reserveItem(id: Item['id']) {
+    const item = wishlist.value.items.find(i => i?.id === id)
+    if (!item || !user.value) return
+    // Optimistic update: set reservedBy to current user immediately
+    item.reservedBy = user.value
+    item.reservedAt = new Date().toISOString()
+    try {
+      const serverWishlist = await itemReserve(id)
+      const serverItem = serverWishlist.items.find((i: Item) => i.id === id)
+      if (serverItem) Object.assign(item, serverItem)
+    }
+    catch {
+      // Rollback on error
+      item.reservedBy = null
+      item.reservedAt = null
+    }
+  }
+
+  async function cancelReserveItem(id: Item['id']) {
+    const item = wishlist.value.items.find(i => i?.id === id)
+    if (!item) return
+    const prevReservedBy = item.reservedBy
+    const prevReservedAt = item.reservedAt
+    // Optimistic update: clear reservation immediately
+    item.reservedBy = null
+    item.reservedAt = null
+    try {
+      const serverWishlist = await itemReserveCancel(id)
+      const serverItem = serverWishlist.items.find((i: Item) => i.id === id)
+      if (serverItem) Object.assign(item, serverItem)
+    }
+    catch {
+      // Rollback on error
+      item.reservedBy = prevReservedBy
+      item.reservedAt = prevReservedAt
+    }
+  }
+
   return {
     init,
     user,
@@ -60,6 +115,8 @@ export const useAppStore = defineStore('app', () => {
     userDisplayName,
     createItem,
     removeItem,
+    reserveItem,
+    cancelReserveItem,
     saveItems: saveItemsDebounced,
     wishlist,
     wishlistCreatorUsername,
