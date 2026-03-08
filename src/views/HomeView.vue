@@ -48,10 +48,13 @@ function createOwnWishlist() {
       <AppListShared v-else />
     </div>
 
-    <div v-if="!appStore.userIsCreator" :class="style.appPanel">
-      <button :class="style.appListAction" @click="createOwnWishlist">
-        {{ t('wishlist.newList') }}
-      </button>
+    <div v-if="!appStore.userIsCreator" :class="style.appActionBar">
+      <div :class="style.appActionBarBlur" />
+      <div :class="style.appActionBarContent">
+        <button :class="style.appActionBarButton" @click="createOwnWishlist">
+          {{ t('wishlist.newList') }}
+        </button>
+      </div>
     </div>
   </div>
 </template>
